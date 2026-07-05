@@ -187,6 +187,10 @@ export function getPlaylistsByUser(userId: string): Playlist[] {
   return getPlaylists().filter((p) => p.userId === userId);
 }
 
+export function getPlaylistById(id: string): Playlist | undefined {
+  return getPlaylists().find((p) => p.id === id);
+}
+
 export function addPlaylist(playlist: Playlist): void {
   update("playlists", [...getPlaylists(), playlist]);
 }

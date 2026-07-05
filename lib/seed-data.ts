@@ -1,6 +1,9 @@
-import type { StorageSchema, User } from "@/types";
+import type { Album, Artist, Playlist, Song, StorageSchema, User } from "@/types";
 
 const now = new Date().toISOString();
+
+export const MOCK_ARTIST_ID = "artist-sara-1";
+export const MOCK_ALBUM_ID = "album-midnight-echoes";
 
 export const MOCK_USERS: User[] = [
   {
@@ -81,6 +84,103 @@ export const MOCK_USERS: User[] = [
   },
 ];
 
+export const MOCK_ARTISTS: Artist[] = [
+  {
+    id: MOCK_ARTIST_ID,
+    userId: "user-artist-1",
+    stageName: "Sara Artist",
+    bio: "Electronic and ambient music producer.",
+    status: "approved",
+    isVerified: true,
+    totalListeners: 12800,
+    totalStreams: 54000,
+    createdAt: now,
+  },
+];
+
+export const MOCK_SONGS: Song[] = [
+  {
+    id: "song-neon-dreams",
+    title: "Neon Dreams",
+    artistId: MOCK_ARTIST_ID,
+    albumId: MOCK_ALBUM_ID,
+    genre: "Electronic",
+    releaseYear: 2024,
+    featuredArtistIds: [],
+    listenerCount: 8200,
+    streamCount: 24000,
+    durationSeconds: 214,
+    createdAt: now,
+  },
+  {
+    id: "song-city-lights",
+    title: "City Lights",
+    artistId: MOCK_ARTIST_ID,
+    albumId: MOCK_ALBUM_ID,
+    genre: "Electronic",
+    releaseYear: 2024,
+    featuredArtistIds: [],
+    listenerCount: 6100,
+    streamCount: 18000,
+    durationSeconds: 192,
+    createdAt: now,
+  },
+  {
+    id: "song-solitude",
+    title: "Solitude",
+    artistId: MOCK_ARTIST_ID,
+    genre: "Ambient",
+    releaseYear: 2025,
+    featuredArtistIds: [],
+    listenerCount: 4300,
+    streamCount: 9200,
+    durationSeconds: 248,
+    createdAt: now,
+  },
+  {
+    id: "song-echoes",
+    title: "Echoes",
+    artistId: MOCK_ARTIST_ID,
+    albumId: MOCK_ALBUM_ID,
+    genre: "Electronic",
+    releaseYear: 2024,
+    featuredArtistIds: [],
+    listenerCount: 3900,
+    streamCount: 11000,
+    durationSeconds: 205,
+    createdAt: now,
+  },
+];
+
+export const MOCK_ALBUMS: Album[] = [
+  {
+    id: MOCK_ALBUM_ID,
+    title: "Midnight Echoes",
+    artistId: MOCK_ARTIST_ID,
+    genre: "Electronic",
+    releaseYear: 2024,
+    songIds: ["song-neon-dreams", "song-city-lights", "song-echoes"],
+    listenerCount: 15000,
+    streamCount: 53000,
+    createdAt: now,
+  },
+];
+
+export const MOCK_PLAYLISTS: Playlist[] = [
+  {
+    id: "playlist-listener-favorites",
+    userId: "user-listener-1",
+    name: "Late Night Drive",
+    songIds: ["song-neon-dreams", "song-solitude"],
+    createdAt: now,
+    updatedAt: now,
+  },
+];
+
 export const MOCK_SEED_DATA: Partial<StorageSchema> = {
   users: MOCK_USERS,
+  artists: MOCK_ARTISTS,
+  albums: MOCK_ALBUMS,
+  songs: MOCK_SONGS,
+  playlists: MOCK_PLAYLISTS,
 };
