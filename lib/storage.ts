@@ -306,10 +306,20 @@ export function getAppSettings(): StorageSchema["appSettings"] {
 }
 
 export function updateAppSettings(
-  patch: Partial<StorageSchema["appSettings"]>,
+  patch: Omit<Partial<StorageSchema["appSettings"]>, "notificationPreferences"> & {
+    notificationPreferences?: Partial<
+      StorageSchema["appSettings"]["notificationPreferences"]
+    >;
+  },
 ): void {
   const current = getAppSettings();
-  update("appSettings", { ...current, ...patch });
+  update("appSettings", {
+    ...current,
+    ...patch,
+    notificationPreferences: patch.notificationPreferences
+      ? { ...current.notificationPreferences, ...patch.notificationPreferences }
+      : current.notificationPreferences,
+  });
 }
 
 // ── Utility ────────────────────────────────────────────────────────────────
@@ -320,4 +330,56 @@ export function resetStorage(): void {
 
 export function seedStorage(data: Partial<StorageSchema>): void {
   writeAll({ ...EMPTY_STORAGE, ...readAll(), ...data });
+}
+
+export function deleteUserAccount(userId: string): boolean {
+  const user = getUsers().find((entry) => entry.id === userId);
+  if (!user) return false;
+
+  mutateUsers((users) =>
+    users
+      .filter((entry) => entry.id !== userId)
+      .map((entry) => ({
+        ...entry,
+        followerIds: entry.followerIds.filter((id) => id !== userId),
+        followingUserIds: entry.followingUserIds.filter((id) => id !== userId),
+      })),
+  );
+
+  update(
+    "playlists",
+    getPlaylists().filter((playlist) => playlist.userId !== userId),
+  );
+
+  update(
+    "notifications",
+    getNotifications().filter((notification) => notification.userId !== userId),
+  );
+
+  update(
+    "tickets",
+    getTickets().filter((ticket) => ticket.userId !== userId),
+  );
+
+  update(
+    "subscriptions",
+    getSubscriptions().filter((subscription) => subscription.userId !== userId),
+  );
+
+  update(
+    "artists",
+    getArtists().filter((artist) => artist.userId !== userId),
+  );
+
+  update(
+    "passwordResetRequests",
+    getPasswordResetRequests().filter((request) => request.userId !== userId),
+  );
+
+  const session = getAuthSession();
+  if (session?.userId === userId) {
+    setAuthSession(null);
+  }
+
+  return true;
 }
