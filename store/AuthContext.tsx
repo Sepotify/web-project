@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { getAuthSession, getUserById, setAuthSession } from "@/lib/storage";
+import { authenticateUser, type LoginResult } from "@/lib/auth";
 import type { User, UserRole } from "@/types";
 
 interface AuthContextValue {
@@ -16,6 +17,7 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (userId: string) => void;
+  loginWithCredentials: (email: string, password: string) => LoginResult;
   logout: () => void;
   hasRole: (...roles: UserRole[]) => boolean;
 }
@@ -48,6 +50,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(found);
   }, []);
 
+  const loginWithCredentials = useCallback((email: string, password: string): LoginResult => {
+    const result = authenticateUser(email, password);
+    if (result.success && result.user) {
+      setAuthSession({ userId: result.user.id, role: result.user.role });
+      setUser(result.user);
+    }
+    return result;
+  }, []);
+
   const logout = useCallback(() => {
     setAuthSession(null);
     setUser(null);
@@ -65,6 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAuthenticated: !!user,
         isLoading,
         login,
+        loginWithCredentials,
         logout,
         hasRole,
       }}

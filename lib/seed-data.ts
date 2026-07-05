@@ -1,0 +1,70 @@
+import type { StorageSchema, User } from "@/types";
+
+const now = new Date().toISOString();
+
+export const MOCK_USERS: User[] = [
+  {
+    id: "user-listener-1",
+    email: "listener@example.com",
+    password: "123456",
+    displayName: "علی شنونده",
+    username: "ali_listener",
+    role: "listener",
+    subscription: "silver",
+    followerIds: [],
+    followingUserIds: [],
+    followingArtistIds: [],
+    dailyStreamCount: 12,
+    birthDate: "2000-05-15",
+    gender: "male",
+    createdAt: now,
+  },
+  {
+    id: "user-artist-1",
+    email: "artist@example.com",
+    password: "123456",
+    displayName: "سارا هنرمند",
+    username: "sara_artist",
+    role: "artist",
+    subscription: "gold",
+    followerIds: ["user-listener-1"],
+    followingUserIds: [],
+    followingArtistIds: [],
+    dailyStreamCount: 0,
+    birthDate: "1998-03-20",
+    gender: "female",
+    createdAt: now,
+  },
+  {
+    id: "user-support-1",
+    email: "support@example.com",
+    password: "123456",
+    displayName: "رضا پشتیبان",
+    username: "reza_support",
+    role: "support",
+    subscription: "gold",
+    followerIds: [],
+    followingUserIds: [],
+    followingArtistIds: [],
+    dailyStreamCount: 0,
+    createdAt: now,
+  },
+  {
+    id: "user-admin-1",
+    email: "admin@example.com",
+    password: "123456",
+    displayName: "مدیر سامانه",
+    username: "system_admin",
+    role: "admin",
+    subscription: "gold",
+    followerIds: [],
+    followingUserIds: [],
+    followingArtistIds: [],
+    dailyStreamCount: 0,
+    createdAt: now,
+  },
+];
+
+export const MOCK_SEED_DATA: Partial<StorageSchema> = {
+  users: MOCK_USERS,
+};

@@ -69,6 +69,11 @@ export function getUserById(id: string): User | undefined {
   return getUsers().find((u) => u.id === id);
 }
 
+export function getUserByEmail(email: string): User | undefined {
+  const normalized = email.trim().toLowerCase();
+  return getUsers().find((u) => u.email.toLowerCase() === normalized);
+}
+
 export function addUser(user: User): void {
   update("users", [...getUsers(), user]);
 }
