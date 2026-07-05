@@ -1,5 +1,6 @@
 import {
   addPasswordResetRequest,
+  getArtistByUserId,
   getUserByEmail,
 } from "@/lib/storage";
 import type { User, UserRole } from "@/types";
@@ -28,6 +29,16 @@ const ROLE_REDIRECT_PATHS: Record<UserRole, string> = {
 
 export function getRedirectPathForRole(role: UserRole): string {
   return ROLE_REDIRECT_PATHS[role];
+}
+
+export function getRedirectPathForUser(user: User): string {
+  if (user.role === "artist") {
+    const artist = getArtistByUserId(user.id);
+    if (artist?.status === "pending") {
+      return "/register/pending";
+    }
+  }
+  return getRedirectPathForRole(user.role);
 }
 
 export function validateEmail(email: string): string | undefined {

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
-import { getRedirectPathForRole, validateEmail } from "@/lib/auth";
+import { getRedirectPathForUser, validateEmail } from "@/lib/auth";
 import { useAuth } from "@/store/AuthContext";
 
 export function LoginForm() {
@@ -48,7 +48,7 @@ export function LoginForm() {
     }
 
     showToast(`Welcome back, ${result.user.displayName}!`, "success");
-    router.push(getRedirectPathForRole(result.user.role));
+    router.push(getRedirectPathForUser(result.user));
   }
 
   return (

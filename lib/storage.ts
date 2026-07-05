@@ -102,6 +102,10 @@ export function getArtistById(id: string): Artist | undefined {
   return getArtists().find((a) => a.id === id);
 }
 
+export function getArtistByUserId(userId: string): Artist | undefined {
+  return getArtists().find((a) => a.userId === userId);
+}
+
 export function addArtist(artist: Artist): void {
   update("artists", [...getArtists(), artist]);
 }

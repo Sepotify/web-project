@@ -6,47 +6,36 @@ import { useRouter } from "next/navigation";
 import { PrivacyPolicyCheckbox } from "@/components/auth/PrivacyPolicyCheckbox";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Select } from "@/components/ui/Select";
+import { Textarea } from "@/components/ui/Textarea";
 import { useToast } from "@/components/ui/Toast";
 import {
-  validateRegisterListenerInput,
-  type RegisterListenerErrors,
-  type RegisterListenerInput,
+  validateRegisterArtistInput,
+  type RegisterArtistErrors,
+  type RegisterArtistInput,
 } from "@/lib/register";
 import { useAuth } from "@/store/AuthContext";
-import type { Gender } from "@/types";
 
-const GENDER_OPTIONS = [
-  { value: "male", label: "Male" },
-  { value: "female", label: "Female" },
-  { value: "other", label: "Other" },
-  { value: "prefer_not_to_say", label: "Prefer not to say" },
-];
-
-const INITIAL_FORM: RegisterListenerInput = {
-  displayName: "",
+const INITIAL_FORM: RegisterArtistInput = {
   email: "",
   password: "",
   confirmPassword: "",
-  birthDate: "",
-  gender: "",
+  stageName: "",
+  portfolio: "",
   acceptedPrivacyPolicy: false,
 };
 
-export function RegisterForm() {
+export function ArtistRegisterForm() {
   const router = useRouter();
-  const { registerListener: registerAndSignIn } = useAuth();
+  const { registerArtist } = useAuth();
   const { showToast } = useToast();
 
-  const [form, setForm] = useState<RegisterListenerInput>(INITIAL_FORM);
-  const [errors, setErrors] = useState<RegisterListenerErrors>({});
+  const [form, setForm] = useState<RegisterArtistInput>(INITIAL_FORM);
+  const [errors, setErrors] = useState<RegisterArtistErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const today = new Date().toISOString().split("T")[0];
-
-  function updateField<K extends keyof RegisterListenerInput>(
+  function updateField<K extends keyof RegisterArtistInput>(
     field: K,
-    value: RegisterListenerInput[K],
+    value: RegisterArtistInput[K],
   ) {
     setForm((prev) => ({ ...prev, [field]: value }));
     if (errors[field]) {
@@ -57,38 +46,43 @@ export function RegisterForm() {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const validationErrors = validateRegisterListenerInput(form);
+    const validationErrors = validateRegisterArtistInput(form);
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       return;
     }
 
     setIsSubmitting(true);
-    const result = registerAndSignIn(form);
+    const result = registerArtist(form);
     setIsSubmitting(false);
 
     if (!result.success || !result.user) {
       if (result.errors) {
-        setErrors(result.errors as RegisterListenerErrors);
+        setErrors(result.errors as RegisterArtistErrors);
       }
       showToast(result.error ?? "Registration failed.", "error");
       return;
     }
 
-    showToast(`Welcome, ${result.user.displayName}!`, "success");
-    router.push("/");
+    showToast("Artist application submitted successfully.", "success");
+    router.push("/register/pending");
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+      <p className="text-sm leading-6 text-text-secondary">
+        Apply for an artist account. Your profile will be reviewed by our support team
+        before you can publish music.
+      </p>
+
       <Input
-        label="Display name"
-        name="displayName"
-        autoComplete="name"
-        placeholder="How should we call you?"
-        value={form.displayName}
-        onChange={(event) => updateField("displayName", event.target.value)}
-        error={errors.displayName}
+        label="Stage name"
+        name="stageName"
+        autoComplete="nickname"
+        placeholder="Your artist name"
+        value={form.stageName}
+        onChange={(event) => updateField("stageName", event.target.value)}
+        error={errors.stageName}
       />
 
       <Input
@@ -126,28 +120,14 @@ export function RegisterForm() {
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <Input
-          label="Date of birth"
-          type="date"
-          name="birthDate"
-          autoComplete="bday"
-          max={today}
-          value={form.birthDate}
-          onChange={(event) => updateField("birthDate", event.target.value)}
-          error={errors.birthDate}
-        />
-
-        <Select
-          label="Gender"
-          name="gender"
-          placeholder="Select gender"
-          options={GENDER_OPTIONS}
-          value={form.gender}
-          onChange={(event) => updateField("gender", event.target.value as Gender | "")}
-          error={errors.gender}
-        />
-      </div>
+      <Textarea
+        label="Portfolio / sample works"
+        name="portfolio"
+        placeholder="Share links or describe your sample works for review..."
+        value={form.portfolio}
+        onChange={(event) => updateField("portfolio", event.target.value)}
+        error={errors.portfolio}
+      />
 
       <PrivacyPolicyCheckbox
         checked={form.acceptedPrivacyPolicy}
@@ -156,7 +136,7 @@ export function RegisterForm() {
       />
 
       <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? "Creating account..." : "Create account"}
+        {isSubmitting ? "Submitting application..." : "Submit artist application"}
       </Button>
 
       <p className="text-center text-sm text-text-muted">

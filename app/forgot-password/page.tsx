@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { ForgotPasswordForm } from "@/components/auth/ForgotPasswordForm";
-import { getRedirectPathForRole } from "@/lib/auth";
+import { getRedirectPathForUser } from "@/lib/auth";
 import { useAuth } from "@/store/AuthContext";
 
 export default function ForgotPasswordPage() {
@@ -13,7 +13,7 @@ export default function ForgotPasswordPage() {
 
   useEffect(() => {
     if (!isLoading && isAuthenticated && user) {
-      router.replace(getRedirectPathForRole(user.role));
+      router.replace(getRedirectPathForUser(user));
     }
   }, [isAuthenticated, isLoading, router, user]);
 

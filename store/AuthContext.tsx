@@ -11,7 +11,9 @@ import {
 import { getAuthSession, getUserById, setAuthSession } from "@/lib/storage";
 import { authenticateUser, type LoginResult } from "@/lib/auth";
 import {
+  registerArtist as registerArtistUser,
   registerListener as registerListenerUser,
+  type RegisterArtistInput,
   type RegisterListenerInput,
   type RegisterResult,
 } from "@/lib/register";
@@ -24,6 +26,7 @@ interface AuthContextValue {
   login: (userId: string) => void;
   loginWithCredentials: (email: string, password: string) => LoginResult;
   registerListener: (input: RegisterListenerInput) => RegisterResult;
+  registerArtist: (input: RegisterArtistInput) => RegisterResult;
   logout: () => void;
   hasRole: (...roles: UserRole[]) => boolean;
 }
@@ -74,6 +77,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return result;
   }, []);
 
+  const registerArtist = useCallback((input: RegisterArtistInput): RegisterResult => {
+    const result = registerArtistUser(input);
+    if (result.success && result.user) {
+      setAuthSession({ userId: result.user.id, role: result.user.role });
+      setUser(result.user);
+    }
+    return result;
+  }, []);
+
   const logout = useCallback(() => {
     setAuthSession(null);
     setUser(null);
@@ -93,6 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         loginWithCredentials,
         registerListener,
+        registerArtist,
         logout,
         hasRole,
       }}
