@@ -1,4 +1,7 @@
-import { getUserByEmail } from "@/lib/storage";
+import {
+  addPasswordResetRequest,
+  getUserByEmail,
+} from "@/lib/storage";
 import type { User, UserRole } from "@/types";
 
 export interface LoginResult {
@@ -6,6 +9,15 @@ export interface LoginResult {
   user?: User;
   error?: string;
 }
+
+export interface PasswordResetResult {
+  success: boolean;
+  error?: string;
+}
+
+export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const RESET_TOKEN_TTL_MS = 60 * 60 * 1000;
 
 const ROLE_REDIRECT_PATHS: Record<UserRole, string> = {
   listener: "/",
@@ -18,50 +30,64 @@ export function getRedirectPathForRole(role: UserRole): string {
   return ROLE_REDIRECT_PATHS[role];
 }
 
-export function authenticateUser(email: string, password: string): LoginResult {
-  const normalizedEmail = email.trim().toLowerCase();
+export function validateEmail(email: string): string | undefined {
+  const normalized = email.trim();
 
-  if (!normalizedEmail) {
-    return { success: false, error: "ایمیل الزامی است." };
+  if (!normalized) {
+    return "Email is required.";
+  }
+
+  if (!EMAIL_PATTERN.test(normalized)) {
+    return "Please enter a valid email address.";
+  }
+
+  return undefined;
+}
+
+export function authenticateUser(email: string, password: string): LoginResult {
+  const emailError = validateEmail(email);
+  if (emailError) {
+    return { success: false, error: emailError };
   }
 
   if (!password) {
-    return { success: false, error: "رمز عبور الزامی است." };
+    return { success: false, error: "Password is required." };
   }
 
-  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailPattern.test(normalizedEmail)) {
-    return { success: false, error: "فرمت ایمیل معتبر نیست." };
-  }
-
+  const normalizedEmail = email.trim().toLowerCase();
   const user = getUserByEmail(normalizedEmail);
-  if (!user) {
-    return { success: false, error: "ایمیل یا رمز عبور اشتباه است." };
-  }
 
-  if (user.password !== password) {
-    return { success: false, error: "ایمیل یا رمز عبور اشتباه است." };
+  if (!user || user.password !== password) {
+    return { success: false, error: "Invalid email or password." };
   }
 
   return { success: true, user };
 }
 
-export function requestPasswordReset(email: string): { success: boolean; error?: string } {
+export function requestPasswordReset(email: string): PasswordResetResult {
+  const emailError = validateEmail(email);
+  if (emailError) {
+    return { success: false, error: emailError };
+  }
+
   const normalizedEmail = email.trim().toLowerCase();
-
-  if (!normalizedEmail) {
-    return { success: false, error: "ایمیل الزامی است." };
-  }
-
-  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailPattern.test(normalizedEmail)) {
-    return { success: false, error: "فرمت ایمیل معتبر نیست." };
-  }
-
   const user = getUserByEmail(normalizedEmail);
+
   if (!user) {
-    return { success: false, error: "حسابی با این ایمیل یافت نشد." };
+    return { success: false, error: "No account found with this email." };
   }
+
+  const now = Date.now();
+  const token = crypto.randomUUID();
+
+  addPasswordResetRequest({
+    id: crypto.randomUUID(),
+    userId: user.id,
+    email: normalizedEmail,
+    token,
+    createdAt: new Date(now).toISOString(),
+    expiresAt: new Date(now + RESET_TOKEN_TTL_MS).toISOString(),
+  });
 
   return { success: true };
 }

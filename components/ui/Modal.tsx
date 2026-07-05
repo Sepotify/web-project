@@ -39,7 +39,7 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
               {title}
             </h2>
           )}
-          <Button variant="ghost" size="sm" onClick={onClose} aria-label="بستن">
+          <Button variant="ghost" size="sm" onClick={onClose} aria-label="Close">
             ✕
           </Button>
         </div>

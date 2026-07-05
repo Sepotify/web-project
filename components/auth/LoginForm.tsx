@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
-import { getRedirectPathForRole } from "@/lib/auth";
+import { getRedirectPathForRole, validateEmail } from "@/lib/auth";
 import { useAuth } from "@/store/AuthContext";
 
 export function LoginForm() {
@@ -22,14 +22,11 @@ export function LoginForm() {
   function validateForm(): boolean {
     const nextErrors: { email?: string; password?: string } = {};
 
-    if (!email.trim()) {
-      nextErrors.email = "ایمیل الزامی است.";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      nextErrors.email = "فرمت ایمیل معتبر نیست.";
-    }
+    const emailError = validateEmail(email);
+    if (emailError) nextErrors.email = emailError;
 
     if (!password) {
-      nextErrors.password = "رمز عبور الزامی است.";
+      nextErrors.password = "Password is required.";
     }
 
     setErrors(nextErrors);
@@ -46,18 +43,18 @@ export function LoginForm() {
     setIsSubmitting(false);
 
     if (!result.success || !result.user) {
-      showToast(result.error ?? "ورود ناموفق بود.", "error");
+      showToast(result.error ?? "Login failed.", "error");
       return;
     }
 
-    showToast(`خوش آمدید، ${result.user.displayName}!`, "success");
+    showToast(`Welcome back, ${result.user.displayName}!`, "success");
     router.push(getRedirectPathForRole(result.user.role));
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
       <Input
-        label="ایمیل"
+        label="Email"
         type="email"
         name="email"
         autoComplete="email"
@@ -68,12 +65,10 @@ export function LoginForm() {
           if (errors.email) setErrors((prev) => ({ ...prev, email: undefined }));
         }}
         error={errors.email}
-        dir="ltr"
-        className="text-left"
       />
 
       <Input
-        label="رمز عبور"
+        label="Password"
         type="password"
         name="password"
         autoComplete="current-password"
@@ -84,30 +79,28 @@ export function LoginForm() {
           if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }));
         }}
         error={errors.password}
-        dir="ltr"
-        className="text-left"
       />
 
       <div className="flex justify-end">
         <Link
           href="/forgot-password"
-          className="text-sm text-text-secondary transition-colors hover:text-accent-primary"
+          className="text-sm font-medium text-text-secondary underline-offset-4 transition-colors hover:text-accent-primary hover:underline"
         >
-          فراموشی رمز عبور
+          Forgot password?
         </Link>
       </div>
 
       <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? "در حال ورود..." : "ورود"}
+        {isSubmitting ? "Signing in..." : "Sign in"}
       </Button>
 
       <p className="text-center text-sm text-text-muted">
-        حساب کاربری ندارید؟{" "}
+        Don&apos;t have an account?{" "}
         <Link
           href="/register"
           className="font-medium text-accent-primary transition-colors hover:text-accent-primary-hover"
         >
-          ثبت‌نام
+          Sign up
         </Link>
       </p>
     </form>

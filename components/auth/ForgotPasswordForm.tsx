@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
-import { requestPasswordReset } from "@/lib/auth";
+import { requestPasswordReset, validateEmail } from "@/lib/auth";
 
 export function ForgotPasswordForm() {
   const { showToast } = useToast();
@@ -16,34 +16,54 @@ export function ForgotPasswordForm() {
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setIsSubmitting(true);
 
+    const emailError = validateEmail(email);
+    if (emailError) {
+      setError(emailError);
+      return;
+    }
+
+    setIsSubmitting(true);
     const result = requestPasswordReset(email);
     setIsSubmitting(false);
 
     if (!result.success) {
       setError(result.error);
+      showToast(result.error ?? "Request failed.", "error");
       return;
     }
 
     setError(undefined);
     setIsSubmitted(true);
-    showToast("لینک بازیابی رمز عبور به ایمیل شما ارسال شد.", "success");
+    showToast("Password reset link sent to your email.", "success");
   }
 
   if (isSubmitted) {
     return (
-      <div className="flex flex-col gap-4 text-center">
-        <p className="text-sm text-text-secondary">
-          اگر حسابی با ایمیل{" "}
-          <span className="font-medium text-text-primary" dir="ltr">
-            {email.trim()}
-          </span>{" "}
-          وجود داشته باشد، لینک بازیابی رمز عبور برای شما ارسال شده است.
-        </p>
-        <Link href="/login">
+      <div className="flex flex-col items-center gap-4 text-center">
+        <div
+          className="flex h-14 w-14 items-center justify-center rounded-full bg-accent-primary/15 text-2xl text-accent-primary"
+          aria-hidden="true"
+        >
+          ✓
+        </div>
+        <div className="flex flex-col gap-2">
+          <h2 className="text-base font-semibold text-text-primary">
+            Request submitted
+          </h2>
+          <p className="text-sm leading-6 text-text-secondary">
+            A password reset link has been sent to{" "}
+            <span className="font-medium text-text-primary">{email.trim()}</span>.
+            Please check your inbox.
+          </p>
+          <p className="text-xs text-text-muted">
+            In Phase 1, email delivery is mocked and the request is stored in
+            localStorage.
+          </p>
+        </div>
+        <Link href="/login" className="w-full">
           <Button variant="secondary" className="w-full">
-            بازگشت به ورود
+            Back to sign in
           </Button>
         </Link>
       </div>
@@ -52,8 +72,13 @@ export function ForgotPasswordForm() {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+      <p className="text-sm leading-6 text-text-secondary">
+        Enter the email address you used to sign up. We&apos;ll send you a link
+        to recover your account.
+      </p>
+
       <Input
-        label="ایمیل"
+        label="Email"
         type="email"
         name="email"
         autoComplete="email"
@@ -64,12 +89,10 @@ export function ForgotPasswordForm() {
           if (error) setError(undefined);
         }}
         error={error}
-        dir="ltr"
-        className="text-left"
       />
 
       <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? "در حال ارسال..." : "ارسال لینک بازیابی"}
+        {isSubmitting ? "Sending..." : "Send reset link"}
       </Button>
 
       <p className="text-center text-sm text-text-muted">
@@ -77,7 +100,7 @@ export function ForgotPasswordForm() {
           href="/login"
           className="font-medium text-accent-primary transition-colors hover:text-accent-primary-hover"
         >
-          بازگشت به ورود
+          Back to sign in
         </Link>
       </p>
     </form>

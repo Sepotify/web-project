@@ -6,10 +6,10 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 
 const roleLabels: Record<string, string> = {
-  listener: "شنونده",
-  artist: "هنرمند",
-  support: "پشتیبان",
-  admin: "مدیر",
+  listener: "Listener",
+  artist: "Artist",
+  support: "Support",
+  admin: "Admin",
 };
 
 export function Navbar() {
@@ -32,12 +32,12 @@ export function Navbar() {
               </div>
             </div>
             <Button variant="ghost" size="sm" onClick={logout}>
-              خروج
+              Sign out
             </Button>
           </>
         ) : (
           <Link href="/login">
-            <Button size="sm">ورود</Button>
+            <Button size="sm">Sign in</Button>
           </Link>
         )}
       </nav>

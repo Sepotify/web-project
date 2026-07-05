@@ -20,15 +20,15 @@ export default function LoginPage() {
   if (isLoading || isAuthenticated) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-bg-primary">
-        <p className="text-text-secondary">در حال بارگذاری...</p>
+        <p className="text-text-secondary">Loading...</p>
       </div>
     );
   }
 
   return (
     <AuthLayout
-      title="ورود به حساب کاربری"
-      subtitle="با ایمیل و رمز عبور خود وارد شوید"
+      title="Sign in to your account"
+      subtitle="Enter your email and password to continue"
     >
       <LoginForm />
       <DemoAccountsHint />
@@ -38,22 +38,22 @@ export default function LoginPage() {
 
 function DemoAccountsHint() {
   const accounts = [
-    { role: "شنونده", email: "listener@example.com" },
-    { role: "هنرمند", email: "artist@example.com" },
-    { role: "پشتیبان", email: "support@example.com" },
-    { role: "مدیر", email: "admin@example.com" },
+    { role: "Listener", email: "listener@example.com" },
+    { role: "Artist", email: "artist@example.com" },
+    { role: "Support", email: "support@example.com" },
+    { role: "Admin", email: "admin@example.com" },
   ];
 
   return (
     <div className="mt-6 rounded-lg border border-border-default bg-bg-elevated p-4">
       <p className="mb-2 text-xs font-medium text-text-secondary">
-        حساب‌های آزمایشی (رمز عبور: 123456)
+        Demo accounts (password: 123456)
       </p>
       <ul className="flex flex-col gap-1 text-xs text-text-muted">
         {accounts.map((account) => (
           <li key={account.email} className="flex justify-between gap-2">
             <span>{account.role}</span>
-            <span dir="ltr">{account.email}</span>
+            <span>{account.email}</span>
           </li>
         ))}
       </ul>

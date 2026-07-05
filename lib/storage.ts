@@ -269,6 +269,18 @@ export function updateSubscription(
   );
 }
 
+// ── Password Reset ─────────────────────────────────────────────────────────
+
+export function getPasswordResetRequests(): StorageSchema["passwordResetRequests"] {
+  return readAll().passwordResetRequests;
+}
+
+export function addPasswordResetRequest(
+  request: StorageSchema["passwordResetRequests"][number],
+): void {
+  update("passwordResetRequests", [...getPasswordResetRequests(), request]);
+}
+
 // ── Auth Session ───────────────────────────────────────────────────────────
 
 export function getAuthSession(): AuthSession | null {

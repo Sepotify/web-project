@@ -131,6 +131,15 @@ export interface AuthSession {
   role: UserRole;
 }
 
+export interface PasswordResetRequest {
+  id: string;
+  userId: string;
+  email: string;
+  token: string;
+  expiresAt: string;
+  createdAt: string;
+}
+
 export interface AppSettings {
   language: "fa" | "en";
   defaultVolume: number;
@@ -146,6 +155,7 @@ export interface StorageSchema {
   notifications: Notification[];
   tickets: Ticket[];
   subscriptions: Subscription[];
+  passwordResetRequests: PasswordResetRequest[];
   authSession: AuthSession | null;
   appSettings: AppSettings;
 }
