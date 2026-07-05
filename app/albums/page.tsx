@@ -4,12 +4,23 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { AppShell } from "@/components/layout/AppShell";
+import { AlbumCard } from "@/components/music/AlbumCard";
 import { SongCard } from "@/components/music/SongCard";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
+import { Select } from "@/components/ui/Select";
 import { useToast } from "@/components/ui/Toast";
-import { getArtistName, getDefaultCover } from "@/lib/music";
+import {
+  ALBUM_SORT_OPTIONS,
+  getSingleTracks,
+  searchAlbums,
+  searchSongs,
+  SONG_SORT_OPTIONS,
+  sortAlbums,
+  sortSongs,
+  type AlbumSortOption,
+  type SongSortOption,
+} from "@/lib/library";
 import { addSongToPlaylist } from "@/lib/playlists";
 import { getAlbums, getPlaylistById, getSongs } from "@/lib/storage";
 import { useAuth } from "@/store/AuthContext";
@@ -40,37 +51,25 @@ function AlbumsPageContent() {
   const { playSong, playQueue } = usePlayer();
 
   const [query, setQuery] = useState("");
+  const [albumSort, setAlbumSort] = useState<AlbumSortOption>("newest");
+  const [songSort, setSongSort] = useState<SongSortOption>("newest");
   const [addedSongIds, setAddedSongIds] = useState<string[]>([]);
 
   const targetPlaylist = addToPlaylistId ? getPlaylistById(addToPlaylistId) : undefined;
   const albums = getAlbums();
   const songs = getSongs();
 
-  const filteredSongs = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
-    if (!normalized) return songs;
-
-    return songs.filter((song) => {
-      const artistName = getArtistName(song.artistId).toLowerCase();
-      return (
-        song.title.toLowerCase().includes(normalized) ||
-        artistName.includes(normalized)
-      );
-    });
-  }, [query, songs]);
-
   const filteredAlbums = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
-    if (!normalized) return albums;
+    const searched = searchAlbums(albums, query);
+    return sortAlbums(searched, albumSort);
+  }, [albums, query, albumSort]);
 
-    return albums.filter((album) => {
-      const artistName = getArtistName(album.artistId).toLowerCase();
-      return (
-        album.title.toLowerCase().includes(normalized) ||
-        artistName.includes(normalized)
-      );
-    });
-  }, [albums, query]);
+  const filteredSongs = useMemo(() => {
+    const searched = searchSongs(songs, query);
+    return sortSongs(searched, songSort);
+  }, [songs, query, songSort]);
+
+  const singleTracks = useMemo(() => getSingleTracks(filteredSongs), [filteredSongs]);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -110,16 +109,16 @@ function AlbumsPageContent() {
     );
   }
 
-  function handlePlaySong(songId: string) {
+  function handlePlaySong(songId: string, queue = filteredSongs) {
     const song = songs.find((item) => item.id === songId);
     if (!song) return;
-    playSong(song, filteredSongs);
+    playSong(song, queue);
     showToast(`Now playing: ${song.title}`, "success");
   }
 
-  function handlePlayAll() {
-    if (filteredSongs.length === 0) return;
-    playQueue(filteredSongs, 0);
+  function handlePlayAll(trackList = filteredSongs) {
+    if (trackList.length === 0) return;
+    playQueue(trackList, 0);
     showToast("Playing all tracks", "success");
   }
 
@@ -163,45 +162,53 @@ function AlbumsPageContent() {
 
         <Input
           label="Search"
-          placeholder="Search by track or artist..."
+          placeholder="Search by track, album, or artist..."
           value={query}
           onChange={(event) => setQuery(event.target.value)}
         />
 
         <section className="flex flex-col gap-3">
-          <h2 className="text-lg font-semibold text-text-primary">Albums</h2>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <h2 className="text-lg font-semibold text-text-primary">Albums</h2>
+            <Select
+              label="Sort albums"
+              value={albumSort}
+              onChange={(event) => setAlbumSort(event.target.value as AlbumSortOption)}
+              options={ALBUM_SORT_OPTIONS}
+              className="sm:max-w-xs"
+            />
+          </div>
+
           {filteredAlbums.length === 0 ? (
             <p className="text-sm text-text-muted">No albums match your search.</p>
           ) : (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {filteredAlbums.map((album) => (
-                <Card key={album.id} className="p-4">
-                  <div
-                    className="mb-3 flex aspect-square items-center justify-center rounded-md text-2xl font-bold text-white"
-                    style={{ background: getDefaultCover(album.title) }}
-                  >
-                    {album.title.slice(0, 1)}
-                  </div>
-                  <h3 className="font-semibold text-text-primary">{album.title}</h3>
-                  <p className="text-sm text-text-muted">{getArtistName(album.artistId)}</p>
-                  <p className="mt-1 text-xs text-text-muted">
-                    {album.songIds.length} tracks
-                  </p>
-                </Card>
+                <AlbumCard key={album.id} album={album} />
               ))}
             </div>
           )}
         </section>
 
         <section className="flex flex-col gap-3">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className="text-lg font-semibold text-text-primary">Tracks</h2>
-            {!addToPlaylistId && filteredSongs.length > 0 && (
-              <Button variant="secondary" size="sm" onClick={handlePlayAll}>
-                Play all
-              </Button>
-            )}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div className="flex items-center justify-between gap-3 sm:justify-start">
+              <h2 className="text-lg font-semibold text-text-primary">All tracks</h2>
+              {!addToPlaylistId && filteredSongs.length > 0 && (
+                <Button variant="secondary" size="sm" onClick={() => handlePlayAll()}>
+                  Play all
+                </Button>
+              )}
+            </div>
+            <Select
+              label="Sort tracks"
+              value={songSort}
+              onChange={(event) => setSongSort(event.target.value as SongSortOption)}
+              options={SONG_SORT_OPTIONS}
+              className="sm:max-w-xs"
+            />
           </div>
+
           {filteredSongs.length === 0 ? (
             <p className="text-sm text-text-muted">No tracks match your search.</p>
           ) : (
@@ -213,7 +220,12 @@ function AlbumsPageContent() {
                   <SongCard
                     key={song.id}
                     song={song}
-                    onPlay={addToPlaylistId ? undefined : () => handlePlaySong(song.id)}
+                    userId={user.id}
+                    subscription={user.subscription}
+                    showPlaylistMenu={!addToPlaylistId}
+                    onPlay={
+                      addToPlaylistId ? undefined : () => handlePlaySong(song.id)
+                    }
                     actionLabel={
                       addToPlaylistId
                         ? isAdded
@@ -233,6 +245,35 @@ function AlbumsPageContent() {
             </div>
           )}
         </section>
+
+        {!addToPlaylistId && (
+          <section className="flex flex-col gap-3">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-lg font-semibold text-text-primary">Singles</h2>
+              {singleTracks.length > 0 && (
+                <Button variant="secondary" size="sm" onClick={() => handlePlayAll(singleTracks)}>
+                  Play singles
+                </Button>
+              )}
+            </div>
+
+            {singleTracks.length === 0 ? (
+              <p className="text-sm text-text-muted">No singles match your search.</p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {singleTracks.map((song) => (
+                  <SongCard
+                    key={`single-${song.id}`}
+                    song={song}
+                    userId={user.id}
+                    subscription={user.subscription}
+                    onPlay={() => handlePlaySong(song.id, singleTracks)}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        )}
       </div>
     </AppShell>
   );
