@@ -1,8 +1,9 @@
 "use client";
 
 import { useAuth } from "@/store/AuthContext";
-import type { Song } from "@/types";
+import { canViewGoldStats } from "@/lib/subscription";
 import { cn } from "@/lib/utils";
+import type { Song } from "@/types";
 
 interface GoldStatsProps {
   song: Song;
@@ -11,9 +12,8 @@ interface GoldStatsProps {
 
 export function GoldStats({ song, className }: GoldStatsProps) {
   const { user } = useAuth();
-  const isGold = user?.subscription === "gold";
 
-  if (!isGold) return null;
+  if (!canViewGoldStats(user?.subscription)) return null;
 
   return (
     <div className={cn("rounded-lg border border-border-default bg-bg-elevated p-4", className)}>

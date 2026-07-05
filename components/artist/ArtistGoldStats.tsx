@@ -1,8 +1,9 @@
 "use client";
 
+import { canViewGoldStats } from "@/lib/subscription";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/store/AuthContext";
 import type { Artist } from "@/types";
-import { cn } from "@/lib/utils";
 
 interface ArtistGoldStatsProps {
   artist: Artist;
@@ -11,9 +12,8 @@ interface ArtistGoldStatsProps {
 
 export function ArtistGoldStats({ artist, className }: ArtistGoldStatsProps) {
   const { user } = useAuth();
-  const isGold = user?.subscription === "gold";
 
-  if (!isGold) return null;
+  if (!canViewGoldStats(user?.subscription)) return null;
 
   return (
     <section
