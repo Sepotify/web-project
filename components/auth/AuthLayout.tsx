@@ -5,9 +5,12 @@ interface AuthLayoutProps {
   title: string;
   subtitle?: string;
   children: ReactNode;
+  maxWidth?: "md" | "lg";
 }
 
-export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
+export function AuthLayout({ title, subtitle, children, maxWidth = "md" }: AuthLayoutProps) {
+  const widthClass = maxWidth === "lg" ? "max-w-lg" : "max-w-md";
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-bg-primary px-4 py-8">
       <div className="mb-8 text-center">
@@ -16,7 +19,9 @@ export function AuthLayout({ title, subtitle, children }: AuthLayoutProps) {
         </Link>
       </div>
 
-      <div className="w-full max-w-md rounded-xl border border-border-default bg-bg-secondary p-6 shadow-lg md:p-8">
+      <div
+        className={`w-full ${widthClass} rounded-xl border border-border-default bg-bg-secondary p-6 shadow-lg md:p-8`}
+      >
         <div className="mb-6 text-center">
           <h1 className="text-xl font-bold text-text-primary">{title}</h1>
           {subtitle && (
