@@ -85,6 +85,10 @@ export function updateUser(id: string, patch: Partial<User>): void {
   );
 }
 
+export function mutateUsers(mutator: (users: User[]) => User[]): void {
+  update("users", mutator(getUsers()));
+}
+
 export function deleteUser(id: string): void {
   update(
     "users",

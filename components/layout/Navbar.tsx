@@ -24,13 +24,16 @@ export function Navbar() {
       <nav className="flex items-center gap-3">
         {isAuthenticated && user ? (
           <>
-            <div className="hidden items-center gap-2 sm:flex">
+            <Link
+              href="/profile"
+              className="hidden items-center gap-2 sm:flex hover:opacity-90"
+            >
               <Avatar src={user.avatarUrl} alt={user.displayName} size="sm" />
               <div className="text-sm">
                 <p className="font-medium text-text-primary">{user.displayName}</p>
                 <p className="text-xs text-text-muted">{roleLabels[user.role]}</p>
               </div>
-            </div>
+            </Link>
             <Button variant="ghost" size="sm" onClick={logout}>
               Sign out
             </Button>

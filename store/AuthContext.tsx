@@ -28,6 +28,7 @@ interface AuthContextValue {
   registerListener: (input: RegisterListenerInput) => RegisterResult;
   registerArtist: (input: RegisterArtistInput) => RegisterResult;
   logout: () => void;
+  refreshUser: () => void;
   hasRole: (...roles: UserRole[]) => boolean;
 }
 
@@ -91,6 +92,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
+  const refreshUser = useCallback(() => {
+    setUser((prev) => {
+      if (!prev) return null;
+      return getUserById(prev.id) ?? null;
+    });
+  }, []);
+
   const hasRole = useCallback(
     (...roles: UserRole[]) => (user ? roles.includes(user.role) : false),
     [user],
@@ -107,6 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         registerListener,
         registerArtist,
         logout,
+        refreshUser,
         hasRole,
       }}
     >

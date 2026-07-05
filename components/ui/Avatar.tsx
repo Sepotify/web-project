@@ -1,17 +1,19 @@
 import { cn } from "@/lib/utils";
 
-interface AvatarProps {
-  src?: string;
-  alt: string;
-  size?: "sm" | "md" | "lg";
-  className?: string;
-}
-
 const sizeMap = {
   sm: "h-8 w-8 text-xs",
   md: "h-10 w-10 text-sm",
   lg: "h-16 w-16 text-lg",
+  xl: "h-24 w-24 text-xl",
+  "2xl": "h-32 w-32 text-2xl",
 };
+
+interface AvatarProps {
+  src?: string;
+  alt: string;
+  size?: keyof typeof sizeMap;
+  className?: string;
+}
 
 export function Avatar({ src, alt, size = "md", className }: AvatarProps) {
   const initials = alt
