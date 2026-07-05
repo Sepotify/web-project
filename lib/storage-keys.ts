@@ -13,12 +13,13 @@ export const STORAGE_KEYS = {
   notifications: "notifications",
   tickets: "tickets",
   subscriptions: "subscriptions",
+  passwordResetRequests: "passwordResetRequests",
   authSession: "authSession",
   appSettings: "appSettings",
 } as const satisfies Record<keyof StorageSchema, string>;
 
 export const DEFAULT_APP_SETTINGS: StorageSchema["appSettings"] = {
-  language: "fa",
+  language: "en",
   defaultVolume: 0.7,
   notificationPreferences: {
     subscription_expiring: true,
@@ -40,6 +41,7 @@ export const EMPTY_STORAGE: StorageSchema = {
   notifications: [],
   tickets: [],
   subscriptions: [],
+  passwordResetRequests: [],
   authSession: null,
   appSettings: DEFAULT_APP_SETTINGS,
 };
@@ -55,6 +57,7 @@ export const EMPTY_STORAGE: StorageSchema = {
  * notifications: Notification[]
  * tickets:      Ticket[]
  * subscriptions: Subscription[]
+ * passwordResetRequests: PasswordResetRequest[]
  * authSession:  { userId, role } | null
  * appSettings:  { language, defaultVolume, notificationPreferences }
  */

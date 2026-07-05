@@ -69,6 +69,11 @@ export function getUserById(id: string): User | undefined {
   return getUsers().find((u) => u.id === id);
 }
 
+export function getUserByEmail(email: string): User | undefined {
+  const normalized = email.trim().toLowerCase();
+  return getUsers().find((u) => u.email.toLowerCase() === normalized);
+}
+
 export function addUser(user: User): void {
   update("users", [...getUsers(), user]);
 }
@@ -78,6 +83,10 @@ export function updateUser(id: string, patch: Partial<User>): void {
     "users",
     getUsers().map((u) => (u.id === id ? { ...u, ...patch } : u)),
   );
+}
+
+export function mutateUsers(mutator: (users: User[]) => User[]): void {
+  update("users", mutator(getUsers()));
 }
 
 export function deleteUser(id: string): void {
@@ -95,6 +104,10 @@ export function getArtists(): Artist[] {
 
 export function getArtistById(id: string): Artist | undefined {
   return getArtists().find((a) => a.id === id);
+}
+
+export function getArtistByUserId(userId: string): Artist | undefined {
+  return getArtists().find((a) => a.userId === userId);
 }
 
 export function addArtist(artist: Artist): void {
@@ -172,6 +185,10 @@ export function getPlaylists(): Playlist[] {
 
 export function getPlaylistsByUser(userId: string): Playlist[] {
   return getPlaylists().filter((p) => p.userId === userId);
+}
+
+export function getPlaylistById(id: string): Playlist | undefined {
+  return getPlaylists().find((p) => p.id === id);
 }
 
 export function addPlaylist(playlist: Playlist): void {
@@ -264,6 +281,18 @@ export function updateSubscription(
   );
 }
 
+// ── Password Reset ─────────────────────────────────────────────────────────
+
+export function getPasswordResetRequests(): StorageSchema["passwordResetRequests"] {
+  return readAll().passwordResetRequests;
+}
+
+export function addPasswordResetRequest(
+  request: StorageSchema["passwordResetRequests"][number],
+): void {
+  update("passwordResetRequests", [...getPasswordResetRequests(), request]);
+}
+
 // ── Auth Session ───────────────────────────────────────────────────────────
 
 export function getAuthSession(): AuthSession | null {
@@ -281,10 +310,20 @@ export function getAppSettings(): StorageSchema["appSettings"] {
 }
 
 export function updateAppSettings(
-  patch: Partial<StorageSchema["appSettings"]>,
+  patch: Omit<Partial<StorageSchema["appSettings"]>, "notificationPreferences"> & {
+    notificationPreferences?: Partial<
+      StorageSchema["appSettings"]["notificationPreferences"]
+    >;
+  },
 ): void {
   const current = getAppSettings();
-  update("appSettings", { ...current, ...patch });
+  update("appSettings", {
+    ...current,
+    ...patch,
+    notificationPreferences: patch.notificationPreferences
+      ? { ...current.notificationPreferences, ...patch.notificationPreferences }
+      : current.notificationPreferences,
+  });
 }
 
 // ── Utility ────────────────────────────────────────────────────────────────
@@ -295,4 +334,56 @@ export function resetStorage(): void {
 
 export function seedStorage(data: Partial<StorageSchema>): void {
   writeAll({ ...EMPTY_STORAGE, ...readAll(), ...data });
+}
+
+export function deleteUserAccount(userId: string): boolean {
+  const user = getUsers().find((entry) => entry.id === userId);
+  if (!user) return false;
+
+  mutateUsers((users) =>
+    users
+      .filter((entry) => entry.id !== userId)
+      .map((entry) => ({
+        ...entry,
+        followerIds: entry.followerIds.filter((id) => id !== userId),
+        followingUserIds: entry.followingUserIds.filter((id) => id !== userId),
+      })),
+  );
+
+  update(
+    "playlists",
+    getPlaylists().filter((playlist) => playlist.userId !== userId),
+  );
+
+  update(
+    "notifications",
+    getNotifications().filter((notification) => notification.userId !== userId),
+  );
+
+  update(
+    "tickets",
+    getTickets().filter((ticket) => ticket.userId !== userId),
+  );
+
+  update(
+    "subscriptions",
+    getSubscriptions().filter((subscription) => subscription.userId !== userId),
+  );
+
+  update(
+    "artists",
+    getArtists().filter((artist) => artist.userId !== userId),
+  );
+
+  update(
+    "passwordResetRequests",
+    getPasswordResetRequests().filter((request) => request.userId !== userId),
+  );
+
+  const session = getAuthSession();
+  if (session?.userId === userId) {
+    setAuthSession(null);
+  }
+
+  return true;
 }

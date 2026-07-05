@@ -19,11 +19,11 @@ export function AppShell({ children }: AppShellProps) {
           variant="ghost"
           size="sm"
           onClick={() => setSidebarOpen(true)}
-          aria-label="باز کردن منو"
+          aria-label="Open menu"
         >
           ☰
         </Button>
-        <span className="text-sm font-medium text-text-primary">منو</span>
+        <span className="text-sm font-medium text-text-primary">Menu</span>
       </div>
 
       <Navbar />

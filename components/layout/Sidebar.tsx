@@ -13,14 +13,14 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { href: "/", label: "خانه", roles: ["listener", "artist", "support", "admin"] },
-  { href: "/albums", label: "آلبوم‌ها", roles: ["listener", "artist"] },
-  { href: "/playlists", label: "پلی‌لیست‌ها", roles: ["listener"] },
-  { href: "/profile", label: "پروفایل", roles: ["listener", "artist"] },
-  { href: "/settings", label: "تنظیمات", roles: ["listener", "artist"] },
-  { href: "/notifications", label: "اعلانات", roles: ["listener", "artist", "support", "admin"] },
-  { href: "/artist/works", label: "آثار من", roles: ["artist"] },
-  { href: "/dashboard", label: "داشبورد", roles: ["support", "admin"] },
+  { href: "/", label: "Home", roles: ["listener", "artist", "support", "admin"] },
+  { href: "/albums", label: "Albums", roles: ["listener", "artist"] },
+  { href: "/playlists", label: "Playlists", roles: ["listener"] },
+  { href: "/profile", label: "Profile", roles: ["listener", "artist"] },
+  { href: "/settings", label: "Settings", roles: ["listener", "artist"] },
+  { href: "/notifications", label: "Notifications", roles: ["listener", "artist", "support", "admin"] },
+  { href: "/artist/works", label: "My Works", roles: ["artist"] },
+  { href: "/dashboard", label: "Dashboard", roles: ["support", "admin"] },
 ];
 
 interface SidebarProps {
@@ -48,8 +48,8 @@ export function Sidebar({ isOpen = true, onClose }: SidebarProps) {
 
       <aside
         className={cn(
-          "fixed right-0 top-14 z-40 h-[calc(100vh-3.5rem)] w-64 border-l border-border-default bg-bg-secondary p-4 transition-transform md:static md:translate-x-0",
-          isOpen ? "translate-x-0" : "translate-x-full md:translate-x-0",
+          "fixed left-0 top-14 z-40 h-[calc(100vh-3.5rem)] w-64 border-r border-border-default bg-bg-secondary p-4 transition-transform md:static md:translate-x-0",
+          isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
         )}
       >
         <nav className="flex flex-col gap-1">

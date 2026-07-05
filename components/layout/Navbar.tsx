@@ -6,10 +6,10 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 
 const roleLabels: Record<string, string> = {
-  listener: "شنونده",
-  artist: "هنرمند",
-  support: "پشتیبان",
-  admin: "مدیر",
+  listener: "Listener",
+  artist: "Artist",
+  support: "Support",
+  admin: "Admin",
 };
 
 export function Navbar() {
@@ -24,20 +24,23 @@ export function Navbar() {
       <nav className="flex items-center gap-3">
         {isAuthenticated && user ? (
           <>
-            <div className="hidden items-center gap-2 sm:flex">
+            <Link
+              href="/profile"
+              className="hidden items-center gap-2 sm:flex hover:opacity-90"
+            >
               <Avatar src={user.avatarUrl} alt={user.displayName} size="sm" />
               <div className="text-sm">
                 <p className="font-medium text-text-primary">{user.displayName}</p>
                 <p className="text-xs text-text-muted">{roleLabels[user.role]}</p>
               </div>
-            </div>
+            </Link>
             <Button variant="ghost" size="sm" onClick={logout}>
-              خروج
+              Sign out
             </Button>
           </>
         ) : (
           <Link href="/login">
-            <Button size="sm">ورود</Button>
+            <Button size="sm">Sign in</Button>
           </Link>
         )}
       </nav>

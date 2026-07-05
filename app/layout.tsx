@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { AuthProvider } from "@/store/AuthContext";
+import { StorageSeed } from "@/components/providers/StorageSeed";
+import { LanguageInit } from "@/components/providers/LanguageInit";
 import { ToastProvider } from "@/components/ui/Toast";
 import "./globals.css";
 
@@ -14,11 +16,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fa" dir="rtl">
+    <html lang="en" dir="ltr">
       <body>
-        <AuthProvider>
-          <ToastProvider>{children}</ToastProvider>
-        </AuthProvider>
+        <StorageSeed>
+          <LanguageInit />
+          <AuthProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </AuthProvider>
+        </StorageSeed>
       </body>
     </html>
   );
