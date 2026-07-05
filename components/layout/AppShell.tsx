@@ -3,7 +3,10 @@
 import { useState, type ReactNode } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Sidebar } from "@/components/layout/Sidebar";
+import { MusicPlayer } from "@/components/player/MusicPlayer";
 import { Button } from "@/components/ui/Button";
+import { usePlayer } from "@/hooks/usePlayer";
+import { cn } from "@/lib/utils";
 
 interface AppShellProps {
   children: ReactNode;
@@ -11,6 +14,7 @@ interface AppShellProps {
 
 export function AppShell({ children }: AppShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { currentSong } = usePlayer();
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -33,8 +37,17 @@ export function AppShell({ children }: AppShellProps) {
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
         />
-        <main className="flex-1 overflow-auto p-4 md:p-6">{children}</main>
+        <main
+          className={cn(
+            "flex-1 overflow-auto p-4 md:p-6",
+            currentSong && "pb-24 md:pb-28",
+          )}
+        >
+          {children}
+        </main>
       </div>
+
+      <MusicPlayer />
     </div>
   );
 }

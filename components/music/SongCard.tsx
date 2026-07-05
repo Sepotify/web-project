@@ -1,23 +1,33 @@
 "use client";
 
+import Link from "next/link";
 import { formatDuration, getDefaultCover, getSongMeta } from "@/lib/music";
+import { PlaylistMenu } from "@/components/music/PlaylistMenu";
 import { cn } from "@/lib/utils";
-import type { Song } from "@/types";
+import type { Song, SubscriptionTier } from "@/types";
 import { Button } from "@/components/ui/Button";
 
 interface SongCardProps {
   song: Song;
+  userId?: string;
+  subscription?: SubscriptionTier;
   actionLabel?: string;
   onAction?: () => void;
   actionDisabled?: boolean;
+  onPlay?: () => void;
+  showPlaylistMenu?: boolean;
   compact?: boolean;
 }
 
 export function SongCard({
   song,
+  userId,
+  subscription,
   actionLabel,
   onAction,
   actionDisabled = false,
+  onPlay,
+  showPlaylistMenu = true,
   compact = false,
 }: SongCardProps) {
   const { artistName, albumTitle } = getSongMeta(song);
@@ -29,8 +39,16 @@ export function SongCard({
         compact && "p-2.5",
       )}
     >
-      <div
-        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md text-xs font-bold text-white"
+      <button
+        type="button"
+        onClick={onPlay}
+        disabled={!onPlay}
+        aria-label={onPlay ? `Play ${song.title}` : undefined}
+        className={cn(
+          "flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-md text-xs font-bold text-white",
+          onPlay && "cursor-pointer hover:opacity-90",
+          !onPlay && "cursor-default",
+        )}
         style={{ background: song.coverUrl ? undefined : getDefaultCover(song.title) }}
       >
         {song.coverUrl ? (
@@ -38,24 +56,57 @@ export function SongCard({
           <img
             src={song.coverUrl}
             alt={song.title}
-            className="h-full w-full rounded-md object-cover"
+            className="h-full w-full object-cover"
           />
         ) : (
           song.title.slice(0, 1).toUpperCase()
         )}
-      </div>
+      </button>
 
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-text-primary">{song.title}</p>
+        <button
+          type="button"
+          onClick={onPlay}
+          disabled={!onPlay}
+          className={cn(
+            "block w-full truncate text-left text-sm font-medium text-text-primary",
+            onPlay && "cursor-pointer hover:underline",
+            !onPlay && "cursor-default",
+          )}
+        >
+          {song.title}
+        </button>
+
         <p className="truncate text-xs text-text-muted">
-          {artistName}
-          {albumTitle ? ` · ${albumTitle}` : " · Single"}
+          <Link
+            href={`/artist/${song.artistId}`}
+            className="hover:text-text-primary hover:underline"
+          >
+            {artistName}
+          </Link>
+          {song.albumId && albumTitle ? (
+            <>
+              {" · "}
+              <Link
+                href={`/albums/${song.albumId}`}
+                className="hover:text-text-primary hover:underline"
+              >
+                {albumTitle}
+              </Link>
+            </>
+          ) : (
+            " · Single"
+          )}
         </p>
       </div>
 
       <span className="hidden shrink-0 text-xs text-text-muted sm:inline">
         {formatDuration(song.durationSeconds)}
       </span>
+
+      {userId && showPlaylistMenu && subscription && (
+        <PlaylistMenu song={song} userId={userId} subscription={subscription} />
+      )}
 
       {actionLabel && onAction && (
         <Button

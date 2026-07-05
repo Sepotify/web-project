@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AuthProvider } from "@/store/AuthContext";
+import { PlayerProvider } from "@/store/PlayerContext";
 import { StorageSeed } from "@/components/providers/StorageSeed";
 import { LanguageInit } from "@/components/providers/LanguageInit";
 import { ToastProvider } from "@/components/ui/Toast";
@@ -21,7 +22,9 @@ export default function RootLayout({
         <StorageSeed>
           <LanguageInit />
           <AuthProvider>
-            <ToastProvider>{children}</ToastProvider>
+            <PlayerProvider>
+              <ToastProvider>{children}</ToastProvider>
+            </PlayerProvider>
           </AuthProvider>
         </StorageSeed>
       </body>
