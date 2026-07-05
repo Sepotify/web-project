@@ -10,6 +10,7 @@ interface SongCardProps {
   actionLabel?: string;
   onAction?: () => void;
   actionDisabled?: boolean;
+  onPlay?: () => void;
   compact?: boolean;
 }
 
@@ -18,6 +19,7 @@ export function SongCard({
   actionLabel,
   onAction,
   actionDisabled = false,
+  onPlay,
   compact = false,
 }: SongCardProps) {
   const { artistName, albumTitle } = getSongMeta(song);
@@ -46,11 +48,22 @@ export function SongCard({
       </div>
 
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-text-primary">{song.title}</p>
-        <p className="truncate text-xs text-text-muted">
-          {artistName}
-          {albumTitle ? ` · ${albumTitle}` : " · Single"}
-        </p>
+        <button
+          type="button"
+          onClick={onPlay}
+          disabled={!onPlay}
+          className={cn(
+            "w-full text-left",
+            onPlay && "cursor-pointer hover:underline",
+            !onPlay && "cursor-default",
+          )}
+        >
+          <p className="truncate text-sm font-medium text-text-primary">{song.title}</p>
+          <p className="truncate text-xs text-text-muted">
+            {artistName}
+            {albumTitle ? ` · ${albumTitle}` : " · Single"}
+          </p>
+        </button>
       </div>
 
       <span className="hidden shrink-0 text-xs text-text-muted sm:inline">

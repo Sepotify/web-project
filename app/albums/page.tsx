@@ -13,6 +13,7 @@ import { getArtistName, getDefaultCover } from "@/lib/music";
 import { addSongToPlaylist } from "@/lib/playlists";
 import { getAlbums, getPlaylistById, getSongs } from "@/lib/storage";
 import { useAuth } from "@/store/AuthContext";
+import { usePlayer } from "@/hooks/usePlayer";
 
 export default function AlbumsPage() {
   return (
@@ -36,6 +37,7 @@ function AlbumsPageContent() {
   const addToPlaylistId = searchParams.get("addTo");
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const { showToast } = useToast();
+  const { playSong, playQueue } = usePlayer();
 
   const [query, setQuery] = useState("");
   const [addedSongIds, setAddedSongIds] = useState<string[]>([]);
@@ -106,6 +108,19 @@ function AlbumsPageContent() {
         </div>
       </AppShell>
     );
+  }
+
+  function handlePlaySong(songId: string) {
+    const song = songs.find((item) => item.id === songId);
+    if (!song) return;
+    playSong(song, filteredSongs);
+    showToast(`Now playing: ${song.title}`, "success");
+  }
+
+  function handlePlayAll() {
+    if (filteredSongs.length === 0) return;
+    playQueue(filteredSongs, 0);
+    showToast("Playing all tracks", "success");
   }
 
   function handleAddSong(songId: string) {
@@ -179,7 +194,14 @@ function AlbumsPageContent() {
         </section>
 
         <section className="flex flex-col gap-3">
-          <h2 className="text-lg font-semibold text-text-primary">Tracks</h2>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-lg font-semibold text-text-primary">Tracks</h2>
+            {!addToPlaylistId && filteredSongs.length > 0 && (
+              <Button variant="secondary" size="sm" onClick={handlePlayAll}>
+                Play all
+              </Button>
+            )}
+          </div>
           {filteredSongs.length === 0 ? (
             <p className="text-sm text-text-muted">No tracks match your search.</p>
           ) : (
@@ -191,6 +213,7 @@ function AlbumsPageContent() {
                   <SongCard
                     key={song.id}
                     song={song}
+                    onPlay={addToPlaylistId ? undefined : () => handlePlaySong(song.id)}
                     actionLabel={
                       addToPlaylistId
                         ? isAdded
