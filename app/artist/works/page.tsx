@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
-import { ArtistDiscography } from "@/components/artist/ArtistDiscography";
+import { ArtistCatalog } from "@/components/artist-works/ArtistCatalog";
 import { ReleaseWorkForm } from "@/components/artist-works/ReleaseWorkForm";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -12,6 +12,7 @@ import { getArtistDiscography } from "@/lib/artist";
 import { getArtistByUserId } from "@/lib/storage";
 import { useAuth } from "@/store/AuthContext";
 import { usePlayer } from "@/hooks/usePlayer";
+import type { ReleaseType } from "@/lib/publish";
 import type { Song } from "@/types";
 
 export default function ArtistWorksPage() {
@@ -87,9 +88,17 @@ export default function ArtistWorksPage() {
     );
   }
 
-  function handlePublished() {
+  function handlePublished(releaseType: ReleaseType) {
     setRefreshKey((value) => value + 1);
-    showToast("Single published successfully.", "success");
+    showToast(
+      releaseType === "single" ? "Single published successfully." : "Album published successfully.",
+      "success",
+    );
+  }
+
+  function handleCatalogChanged() {
+    setRefreshKey((value) => value + 1);
+    showToast("Catalog updated.", "success");
   }
 
   function handlePlaySong(song: Song, queue: Song[]) {
@@ -103,22 +112,24 @@ export default function ArtistWorksPage() {
         <div>
           <h1 className="text-2xl font-bold text-text-primary sm:text-3xl">My works</h1>
           <p className="mt-1 text-sm text-text-secondary">
-            Upload audio, lyrics, and cover art to publish a new single.
+            Publish singles or albums, then manage stats and metadata for each release.
           </p>
         </div>
 
         <Card className="p-4 sm:p-6">
-          <h2 className="mb-4 text-lg font-semibold text-text-primary">Publish a single</h2>
+          <h2 className="mb-4 text-lg font-semibold text-text-primary">Publish new release</h2>
           <ReleaseWorkForm artistId={artist.id} onPublished={handlePublished} />
         </Card>
 
         <section key={refreshKey} className="flex flex-col gap-4">
           <h2 className="text-lg font-semibold text-text-primary">Your catalog</h2>
-          <ArtistDiscography
+          <ArtistCatalog
+            artistId={artist.id}
             albums={discography.albums}
             singles={discography.singles}
             subscription={user.subscription}
             userId={user.id}
+            onChanged={handleCatalogChanged}
             onPlaySong={handlePlaySong}
           />
         </section>
