@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import {
   MOCK_SEED_DATA,
 } from "@/lib/seed-data";
-import { getSongs, getUsers, seedStorage } from "@/lib/storage";
+import { getRecentPlaylistPlays, getSongs, getUsers, seedStorage } from "@/lib/storage";
 
 export function StorageSeed({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -19,7 +19,16 @@ export function StorageSeed({ children }: { children: React.ReactNode }) {
         albums: MOCK_SEED_DATA.albums,
         songs: MOCK_SEED_DATA.songs,
         playlists: MOCK_SEED_DATA.playlists,
+        recentPlaylistPlays: MOCK_SEED_DATA.recentPlaylistPlays,
       });
+      return;
+    }
+
+    if (
+      getRecentPlaylistPlays().length === 0 &&
+      MOCK_SEED_DATA.recentPlaylistPlays?.length
+    ) {
+      seedStorage({ recentPlaylistPlays: MOCK_SEED_DATA.recentPlaylistPlays });
     }
   }, []);
 

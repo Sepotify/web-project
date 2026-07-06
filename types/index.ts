@@ -146,12 +146,20 @@ export interface AppSettings {
   notificationPreferences: Record<NotificationType, boolean>;
 }
 
+export interface RecentPlaylistPlay {
+  id: string;
+  userId: string;
+  playlistId: string;
+  playedAt: string;
+}
+
 export interface StorageSchema {
   users: User[];
   artists: Artist[];
   songs: Song[];
   albums: Album[];
   playlists: Playlist[];
+  recentPlaylistPlays: RecentPlaylistPlay[];
   notifications: Notification[];
   tickets: Ticket[];
   subscriptions: Subscription[];

@@ -1,4 +1,4 @@
-import type { Album, Artist, Playlist, Song, StorageSchema, User } from "@/types";
+import type { Album, Artist, Playlist, RecentPlaylistPlay, Song, StorageSchema, User } from "@/types";
 
 const now = new Date().toISOString();
 
@@ -184,10 +184,20 @@ export const MOCK_PLAYLISTS: Playlist[] = [
   },
 ];
 
+export const MOCK_RECENT_PLAYLIST_PLAYS: RecentPlaylistPlay[] = [
+  {
+    id: "recent-play-1",
+    userId: "user-listener-1",
+    playlistId: "playlist-listener-favorites",
+    playedAt: now,
+  },
+];
+
 export const MOCK_SEED_DATA: Partial<StorageSchema> = {
   users: MOCK_USERS,
   artists: MOCK_ARTISTS,
   albums: MOCK_ALBUMS,
   songs: MOCK_SONGS,
   playlists: MOCK_PLAYLISTS,
+  recentPlaylistPlays: MOCK_RECENT_PLAYLIST_PLAYS,
 };

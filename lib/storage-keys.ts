@@ -10,6 +10,7 @@ export const STORAGE_KEYS = {
   songs: "songs",
   albums: "albums",
   playlists: "playlists",
+  recentPlaylistPlays: "recentPlaylistPlays",
   notifications: "notifications",
   tickets: "tickets",
   subscriptions: "subscriptions",
@@ -38,6 +39,7 @@ export const EMPTY_STORAGE: StorageSchema = {
   songs: [],
   albums: [],
   playlists: [],
+  recentPlaylistPlays: [],
   notifications: [],
   tickets: [],
   subscriptions: [],
@@ -54,6 +56,7 @@ export const EMPTY_STORAGE: StorageSchema = {
  * songs:        Song[]
  * albums:       Album[]
  * playlists:    Playlist[]
+ * recentPlaylistPlays: RecentPlaylistPlay[]
  * notifications: Notification[]
  * tickets:      Ticket[]
  * subscriptions: Subscription[]

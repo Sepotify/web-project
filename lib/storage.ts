@@ -9,6 +9,7 @@ import type {
   AuthSession,
   Notification,
   Playlist,
+  RecentPlaylistPlay,
   Song,
   StorageSchema,
   Subscription,
@@ -207,6 +208,40 @@ export function deletePlaylist(id: string): void {
     "playlists",
     getPlaylists().filter((p) => p.id !== id),
   );
+
+  update(
+    "recentPlaylistPlays",
+    getRecentPlaylistPlays().filter((entry) => entry.playlistId !== id),
+  );
+}
+
+// ── Recent playlist plays ──────────────────────────────────────────────────
+
+export function getRecentPlaylistPlays(): RecentPlaylistPlay[] {
+  return readAll().recentPlaylistPlays;
+}
+
+export function getRecentPlaylistPlaysByUser(userId: string): RecentPlaylistPlay[] {
+  return getRecentPlaylistPlays()
+    .filter((entry) => entry.userId === userId)
+    .sort(
+      (a, b) => new Date(b.playedAt).getTime() - new Date(a.playedAt).getTime(),
+    );
+}
+
+export function addRecentPlaylistPlay(entry: RecentPlaylistPlay): void {
+  update("recentPlaylistPlays", [...getRecentPlaylistPlays(), entry]);
+}
+
+export function setRecentPlaylistPlays(entries: RecentPlaylistPlay[]): void {
+  update("recentPlaylistPlays", entries);
+}
+
+export function clearRecentPlaylistPlaysForUser(userId: string): void {
+  update(
+    "recentPlaylistPlays",
+    getRecentPlaylistPlays().filter((entry) => entry.userId !== userId),
+  );
 }
 
 // ── Notifications ──────────────────────────────────────────────────────────
@@ -353,6 +388,11 @@ export function deleteUserAccount(userId: string): boolean {
   update(
     "playlists",
     getPlaylists().filter((playlist) => playlist.userId !== userId),
+  );
+
+  update(
+    "recentPlaylistPlays",
+    getRecentPlaylistPlays().filter((entry) => entry.userId !== userId),
   );
 
   update(
