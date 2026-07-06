@@ -21,6 +21,7 @@ export interface User {
   followingUserIds: string[];
   followingArtistIds: string[];
   dailyStreamCount: number;
+  notificationPreferences?: Partial<Record<NotificationType, boolean>>;
   createdAt: string;
 }
 

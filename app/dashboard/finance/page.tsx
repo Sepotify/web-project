@@ -41,6 +41,8 @@ export default function DashboardFinancePage() {
   const canConfirmSettlement = isDashboardAdmin(user.role);
 
   function handleConfirmSettlement(settlementId: string) {
+    if (!user) return;
+
     setConfirmingId(settlementId);
     const confirmed = confirmArtistSettlement(settlementId, user.role);
     setConfirmingId(null);

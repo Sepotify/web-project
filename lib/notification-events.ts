@@ -1,3 +1,4 @@
+import { isNotificationTypeEnabled } from "@/lib/notification-preferences";
 import {
   addNotification,
   getArtistById,
@@ -11,7 +12,11 @@ type NotificationInput = Omit<Notification, "id" | "createdAt" | "isRead"> & {
   id?: string;
 };
 
-function createNotification(input: NotificationInput): Notification {
+function createNotification(input: NotificationInput): Notification | null {
+  if (!isNotificationTypeEnabled(input.userId, input.type)) {
+    return null;
+  }
+
   const notification: Notification = {
     id: input.id ?? crypto.randomUUID(),
     userId: input.userId,
@@ -173,7 +178,7 @@ export function notifyStaffOfArtistVerificationRequest(artist: Artist): void {
       type: "artist_verification_request",
       title: `New artist application: ${artist.stageName}`,
       message: `${artist.stageName} submitted portfolio materials for review.`,
-      link: `/dashboard?tab=artists&artistId=${artist.id}`,
+      link: `/dashboard/artists/${artist.id}`,
     });
   }
 }

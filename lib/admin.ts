@@ -1,5 +1,5 @@
 import { getArtistById, updateArtist, addTicket, getUserById } from "@/lib/storage";
-import type { Artist, Ticket, TicketMessage } from "@/types";
+import type { Ticket, TicketMessage } from "@/types";
 import {
   notifyArtistApproval,
   notifyArtistRejection,

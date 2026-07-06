@@ -409,7 +409,7 @@ export const MOCK_NOTIFICATIONS: Notification[] = [
     type: "artist_verification_request",
     title: "Artist verification request",
     message: "A new artist submitted portfolio links for verification review.",
-    link: "/dashboard",
+    link: `/dashboard/artists/${MOCK_PENDING_ARTIST_ID}`,
     isRead: false,
     createdAt: daysAgo(1),
   },

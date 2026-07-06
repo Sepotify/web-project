@@ -19,7 +19,6 @@ import {
   getSongs,
   getSubscriptions,
   getTicketById,
-  getTickets,
   getUserById,
   getUsers,
   seedStorage,

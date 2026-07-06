@@ -37,8 +37,10 @@ export default function NotificationsPage() {
     );
   }
 
+  const userId = user.id;
+
   function handleMarkAsRead(notificationId: string) {
-    const updated = markNotificationAsRead(notificationId, user.id);
+    const updated = markNotificationAsRead(notificationId, userId);
     if (!updated) return;
 
     refresh();
@@ -46,7 +48,7 @@ export default function NotificationsPage() {
   }
 
   function handleMarkAllAsRead() {
-    const count = markAllNotificationsAsRead(user.id);
+    const count = markAllNotificationsAsRead(userId);
     if (count === 0) return;
 
     refresh();
@@ -57,7 +59,7 @@ export default function NotificationsPage() {
   }
 
   function handleDelete(notificationId: string) {
-    const removed = removeNotification(notificationId, user.id);
+    const removed = removeNotification(notificationId, userId);
     if (!removed) return;
 
     refresh();

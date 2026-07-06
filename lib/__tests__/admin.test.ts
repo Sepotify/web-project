@@ -41,14 +41,34 @@ const { artists, updateArtistMock, notifyArtistApprovalMock, notifyArtistRejecti
 vi.mock("@/lib/storage", () => ({
   getArtistById: (artistId: string) => artists.find((entry) => entry.id === artistId),
   updateArtist: updateArtistMock,
+  getUserById: vi.fn((userId: string) =>
+    userId === "user-listener-1"
+      ? {
+          id: "user-listener-1",
+          email: "listener@example.com",
+          password: "123456",
+          displayName: "Ali Listener",
+          username: "ali_listener",
+          role: "listener",
+          subscription: "silver",
+          followerIds: [],
+          followingUserIds: [],
+          followingArtistIds: [],
+          dailyStreamCount: 0,
+          createdAt: "2026-01-01T00:00:00.000Z",
+        }
+      : undefined,
+  ),
+  addTicket: vi.fn(),
 }));
 
 vi.mock("@/lib/notification-events", () => ({
   notifyArtistApproval: notifyArtistApprovalMock,
   notifyArtistRejection: notifyArtistRejectionMock,
+  notifyStaffOfNewTicket: vi.fn(),
 }));
 
-import { approveArtist, calculateArtistEarnings, rejectArtist } from "@/lib/admin";
+import { approveArtist, calculateArtistEarnings, createSupportTicket, rejectArtist } from "@/lib/admin";
 
 describe("calculateArtistEarnings", () => {
   it("calculates monthly payout from stream count", () => {
@@ -122,5 +142,18 @@ describe("rejectArtist", () => {
   it("returns false when the artist is not pending", () => {
     expect(rejectArtist("artist-approved-1", "Not eligible")).toBe(false);
     expect(notifyArtistRejectionMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("createSupportTicket", () => {
+  it("requires a subject and message", () => {
+    expect(createSupportTicket("user-listener-1", "", "Help")).toEqual({
+      success: false,
+      error: "Subject is required.",
+    });
+    expect(createSupportTicket("user-listener-1", "Playback issue", "")).toEqual({
+      success: false,
+      error: "Message is required.",
+    });
   });
 });

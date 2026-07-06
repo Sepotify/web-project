@@ -219,18 +219,20 @@ export function ReleaseWorkForm({ artistId, onPublished }: ReleaseWorkFormProps)
         />
       </div>
 
-      <Input
-        label="Featured artists"
-        name="featuredArtists"
-        value={featuredArtists}
-        onChange={(event) => setFeaturedArtists(event.target.value)}
-        placeholder="Stage names, separated by commas"
-        hint={
-          collaboratorHint
+      <div className="flex flex-col gap-1.5">
+        <Input
+          label="Featured artists"
+          name="featuredArtists"
+          value={featuredArtists}
+          onChange={(event) => setFeaturedArtists(event.target.value)}
+          placeholder="Stage names, separated by commas"
+        />
+        <p className="text-xs text-text-secondary">
+          {collaboratorHint
             ? `Approved collaborators: ${collaboratorHint}`
-            : "Use stage names of other approved artists, separated by commas."
-        }
-      />
+            : "Use stage names of other approved artists, separated by commas."}
+        </p>
+      </div>
 
       <FileUploadField
         label="Cover image"
