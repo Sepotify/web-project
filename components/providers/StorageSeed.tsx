@@ -4,7 +4,32 @@ import { useEffect } from "react";
 import {
   MOCK_SEED_DATA,
 } from "@/lib/seed-data";
-import { getRecentPlaylistPlays, getSongs, getUsers, seedStorage } from "@/lib/storage";
+import {
+  addSong,
+  getRecentPlaylistPlays,
+  getSongById,
+  getSongs,
+  getUsers,
+  seedStorage,
+  updateSong,
+} from "@/lib/storage";
+
+function syncSeedSongs(): void {
+  const seedSongs = MOCK_SEED_DATA.songs ?? [];
+  if (seedSongs.length === 0) return;
+
+  for (const seedSong of seedSongs) {
+    const existing = getSongById(seedSong.id);
+    if (!existing) {
+      addSong(seedSong);
+      continue;
+    }
+
+    if (seedSong.isEarlyAccess && !existing.isEarlyAccess) {
+      updateSong(seedSong.id, { isEarlyAccess: true });
+    }
+  }
+}
 
 export function StorageSeed({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -23,6 +48,8 @@ export function StorageSeed({ children }: { children: React.ReactNode }) {
       });
       return;
     }
+
+    syncSeedSongs();
 
     if (
       getRecentPlaylistPlays().length === 0 &&

@@ -4,16 +4,26 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AppShell } from "@/components/layout/AppShell";
+import { EarlyAccessSection } from "@/components/home/EarlyAccessSection";
 import { HomeHeader } from "@/components/home/HomeHeader";
 import { HomeSection } from "@/components/home/HomeSection";
 import { PlaylistCard } from "@/components/home/PlaylistCard";
 import { AlbumCard } from "@/components/music/AlbumCard";
+import { SongCard } from "@/components/music/SongCard";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useToast } from "@/components/ui/Toast";
-import { HOME_ALBUM_LIMIT, HOME_PLAYLIST_LIMIT, getLatestAlbums } from "@/lib/home";
+import {
+  HOME_ALBUM_LIMIT,
+  HOME_PLAYLIST_LIMIT,
+  HOME_SONG_LIMIT,
+  getEarlyAccessSongs,
+  getLatestAlbums,
+  getPopularSongs,
+} from "@/lib/home";
 import { getRecentlyPlayedPlaylists, recordPlaylistPlay } from "@/lib/recent-playlists";
-import { getSongById } from "@/lib/storage";
+import { getSongById, getSongs } from "@/lib/storage";
+import { canAccessEarlyAccess } from "@/lib/subscription";
 import { useAuth } from "@/store/AuthContext";
 import { usePlayer } from "@/hooks/usePlayer";
 import type { Playlist } from "@/types";
@@ -21,11 +31,13 @@ import type { Playlist } from "@/types";
 export default function HomePage() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuth();
-  const { playQueue } = usePlayer();
+  const { playSong, playQueue } = usePlayer();
   const { showToast } = useToast();
   const [recentPlaylists, setRecentPlaylists] = useState<Playlist[]>([]);
 
   const latestAlbums = useMemo(() => getLatestAlbums(HOME_ALBUM_LIMIT), []);
+  const popularSongs = useMemo(() => getPopularSongs(HOME_SONG_LIMIT), []);
+  const earlyAccessSongs = useMemo(() => getEarlyAccessSongs(), []);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -50,6 +62,9 @@ export default function HomePage() {
   }
 
   const userId = user.id;
+  const showRecentPlaylists = user.role === "listener";
+  const showEarlyAccess =
+    canAccessEarlyAccess(user.subscription) && earlyAccessSongs.length > 0;
 
   function handlePlayPlaylist(playlist: Playlist) {
     const songs = playlist.songIds
@@ -67,7 +82,14 @@ export default function HomePage() {
     showToast(`Playing: ${playlist.name}`, "success");
   }
 
-  const showRecentPlaylists = user.role === "listener";
+  function handlePlaySong(songId: string, queue = popularSongs) {
+    const allSongs = getSongs();
+    const song = allSongs.find((item) => item.id === songId);
+    if (!song) return;
+
+    playSong(song, queue);
+    showToast(`Now playing: ${song.title}`, "success");
+  }
 
   return (
     <AppShell>
@@ -113,6 +135,40 @@ export default function HomePage() {
             </div>
           )}
         </HomeSection>
+
+        <HomeSection title="Popular right now" seeAllHref="/albums" seeAllLabel="See all tracks">
+          {popularSongs.length === 0 ? (
+            <p className="text-sm text-text-muted">No tracks available yet.</p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {popularSongs.map((song) => (
+                <SongCard
+                  key={song.id}
+                  song={song}
+                  userId={userId}
+                  subscription={user.subscription}
+                  onPlay={() => handlePlaySong(song.id)}
+                />
+              ))}
+            </div>
+          )}
+        </HomeSection>
+
+        {showEarlyAccess && (
+          <EarlyAccessSection>
+            <div className="flex flex-col gap-2">
+              {earlyAccessSongs.map((song) => (
+                <SongCard
+                  key={song.id}
+                  song={song}
+                  userId={userId}
+                  subscription={user.subscription}
+                  onPlay={() => handlePlaySong(song.id, earlyAccessSongs)}
+                />
+              ))}
+            </div>
+          </EarlyAccessSection>
+        )}
 
         {showRecentPlaylists && recentPlaylists.length === 0 && latestAlbums.length > 0 && (
           <div className="rounded-lg border border-border-default bg-bg-elevated p-4 text-center sm:p-5">

@@ -52,6 +52,7 @@ export interface Song {
   listenerCount: number;
   streamCount: number;
   durationSeconds: number;
+  isEarlyAccess?: boolean;
   createdAt: string;
 }
 
