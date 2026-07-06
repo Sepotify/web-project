@@ -13,6 +13,7 @@ export const STORAGE_KEYS = {
   recentPlaylistPlays: "recentPlaylistPlays",
   notifications: "notifications",
   tickets: "tickets",
+  artistSettlements: "artistSettlements",
   subscriptions: "subscriptions",
   passwordResetRequests: "passwordResetRequests",
   authSession: "authSession",
@@ -42,6 +43,7 @@ export const EMPTY_STORAGE: StorageSchema = {
   recentPlaylistPlays: [],
   notifications: [],
   tickets: [],
+  artistSettlements: [],
   subscriptions: [],
   passwordResetRequests: [],
   authSession: null,
@@ -59,6 +61,7 @@ export const EMPTY_STORAGE: StorageSchema = {
  * recentPlaylistPlays: RecentPlaylistPlay[]
  * notifications: Notification[]
  * tickets:      Ticket[]
+ * artistSettlements: ArtistSettlement[]
  * subscriptions: Subscription[]
  * passwordResetRequests: PasswordResetRequest[]
  * authSession:  { userId, role } | null

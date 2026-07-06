@@ -14,6 +14,7 @@ import type {
   StorageSchema,
   Subscription,
   Ticket,
+  ArtistSettlement,
   User,
 } from "@/types";
 
@@ -281,6 +282,10 @@ export function getTickets(): Ticket[] {
   return readAll().tickets;
 }
 
+export function getTicketById(id: string): Ticket | undefined {
+  return getTickets().find((ticket) => ticket.id === id);
+}
+
 export function addTicket(ticket: Ticket): void {
   update("tickets", [...getTickets(), ticket]);
 }
@@ -289,6 +294,32 @@ export function updateTicket(id: string, patch: Partial<Ticket>): void {
   update(
     "tickets",
     getTickets().map((t) => (t.id === id ? { ...t, ...patch } : t)),
+  );
+}
+
+// ── Artist settlements ─────────────────────────────────────────────────────
+
+export function getArtistSettlements(): ArtistSettlement[] {
+  return readAll().artistSettlements;
+}
+
+export function getArtistSettlementById(id: string): ArtistSettlement | undefined {
+  return getArtistSettlements().find((settlement) => settlement.id === id);
+}
+
+export function addArtistSettlement(settlement: ArtistSettlement): void {
+  update("artistSettlements", [...getArtistSettlements(), settlement]);
+}
+
+export function updateArtistSettlement(
+  id: string,
+  patch: Partial<ArtistSettlement>,
+): void {
+  update(
+    "artistSettlements",
+    getArtistSettlements().map((settlement) =>
+      settlement.id === id ? { ...settlement, ...patch } : settlement,
+    ),
   );
 }
 

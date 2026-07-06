@@ -161,7 +161,7 @@ export function notifyStaffOfNewTicket(ticket: Ticket): void {
       type: "new_ticket",
       title: "New support ticket opened",
       message: `${requesterName} opened ticket "${ticket.subject}".`,
-      link: `/dashboard?tab=tickets&ticketId=${ticket.id}`,
+      link: `/dashboard/tickets/${ticket.id}`,
     });
   }
 }

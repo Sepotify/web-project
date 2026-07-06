@@ -118,6 +118,20 @@ export interface Ticket {
   updatedAt: string;
 }
 
+export type SettlementStatus = "pending" | "paid";
+
+export interface ArtistSettlement {
+  id: string;
+  artistId: string;
+  monthKey: string;
+  uniqueListeners: number;
+  streams: number;
+  payoutAmount: number;
+  status: SettlementStatus;
+  createdAt: string;
+  paidAt?: string;
+}
+
 export interface Subscription {
   id: string;
   userId: string;
@@ -163,6 +177,7 @@ export interface StorageSchema {
   recentPlaylistPlays: RecentPlaylistPlay[];
   notifications: Notification[];
   tickets: Ticket[];
+  artistSettlements: ArtistSettlement[];
   subscriptions: Subscription[];
   passwordResetRequests: PasswordResetRequest[];
   authSession: AuthSession | null;

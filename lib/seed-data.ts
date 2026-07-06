@@ -7,6 +7,8 @@ import type {
   Song,
   StorageSchema,
   Subscription,
+  Ticket,
+  ArtistSettlement,
   User,
 } from "@/types";
 
@@ -258,6 +260,70 @@ export const MOCK_RECENT_PLAYLIST_PLAYS: RecentPlaylistPlay[] = [
   },
 ];
 
+const SEED_MONTH_KEY = (() => {
+  const date = new Date();
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+})();
+
+export const MOCK_TICKET_ID_1042 = "ticket-1042";
+
+export const MOCK_TICKETS: Ticket[] = [
+  {
+    id: MOCK_TICKET_ID_1042,
+    userId: "user-listener-2",
+    subject: "Upgrade from Basic to Silver",
+    status: "open",
+    messages: [
+      {
+        id: "ticket-msg-1042-1",
+        senderId: "user-listener-2",
+        senderRole: "listener",
+        content: "Hi, I want to upgrade to Silver. How does billing work in Phase 1?",
+        createdAt: daysAgo(0),
+      },
+    ],
+    createdAt: daysAgo(0),
+    updatedAt: daysAgo(0),
+  },
+  {
+    id: "ticket-playback-issue",
+    userId: "user-listener-1",
+    subject: "Playback stops after 30 seconds",
+    status: "in_progress",
+    messages: [
+      {
+        id: "ticket-msg-playback-1",
+        senderId: "user-listener-1",
+        senderRole: "listener",
+        content: "When I play Neon Dreams, the audio stops around the 30 second mark.",
+        createdAt: daysAgo(1),
+      },
+      {
+        id: "ticket-msg-playback-2",
+        senderId: "user-support-1",
+        senderRole: "support",
+        content: "Thanks for reporting this. We are looking into browser playback limits.",
+        createdAt: daysAgo(0),
+      },
+    ],
+    createdAt: daysAgo(1),
+    updatedAt: daysAgo(0),
+  },
+];
+
+export const MOCK_SETTLEMENTS: ArtistSettlement[] = [
+  {
+    id: "settlement-sara-current",
+    artistId: MOCK_ARTIST_ID,
+    monthKey: SEED_MONTH_KEY,
+    uniqueListeners: 12800,
+    streams: 54000,
+    payoutAmount: 108,
+    status: "pending",
+    createdAt: now,
+  },
+];
+
 export const MOCK_SUBSCRIPTIONS: Subscription[] = [
   {
     id: "subscription-listener-1",
@@ -333,7 +399,7 @@ export const MOCK_NOTIFICATIONS: Notification[] = [
     type: "new_ticket",
     title: "New support ticket opened",
     message: "A listener reported a playback issue. Review and assign the ticket.",
-    link: "/dashboard",
+    link: `/dashboard/tickets/ticket-playback-issue`,
     isRead: false,
     createdAt: daysAgo(0),
   },
@@ -353,7 +419,7 @@ export const MOCK_NOTIFICATIONS: Notification[] = [
     type: "new_ticket",
     title: "Ticket #1042 needs a response",
     message: "Jamie Basic asked about upgrading from Basic to Silver.",
-    link: "/dashboard",
+    link: `/dashboard/tickets/${MOCK_TICKET_ID_1042}`,
     isRead: false,
     createdAt: daysAgo(0),
   },
@@ -368,4 +434,6 @@ export const MOCK_SEED_DATA: Partial<StorageSchema> = {
   recentPlaylistPlays: MOCK_RECENT_PLAYLIST_PLAYS,
   notifications: MOCK_NOTIFICATIONS,
   subscriptions: MOCK_SUBSCRIPTIONS,
+  tickets: MOCK_TICKETS,
+  artistSettlements: MOCK_SETTLEMENTS,
 };

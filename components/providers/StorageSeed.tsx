@@ -5,16 +5,21 @@ import {
   MOCK_SEED_DATA,
 } from "@/lib/seed-data";
 import { runNotificationChecks } from "@/lib/notification-sync";
+import { syncMonthlySettlements } from "@/lib/finance";
 import {
   addArtist,
   addSong,
+  addTicket,
   addUser,
   getArtistById,
+  getArtistSettlements,
   getNotifications,
   getRecentPlaylistPlays,
   getSongById,
   getSongs,
   getSubscriptions,
+  getTicketById,
+  getTickets,
   getUserById,
   getUsers,
   seedStorage,
@@ -55,6 +60,14 @@ function syncSeedSongs(): void {
   }
 }
 
+function syncSeedTickets(): void {
+  for (const seedTicket of MOCK_SEED_DATA.tickets ?? []) {
+    if (!getTicketById(seedTicket.id)) {
+      addTicket(seedTicket);
+    }
+  }
+}
+
 export function StorageSeed({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (getUsers().length === 0) {
@@ -75,6 +88,13 @@ export function StorageSeed({ children }: { children: React.ReactNode }) {
 
     syncSeedSongs();
     syncSeedArtists();
+    syncSeedTickets();
+
+    if (getArtistSettlements().length === 0 && MOCK_SEED_DATA.artistSettlements?.length) {
+      seedStorage({ artistSettlements: MOCK_SEED_DATA.artistSettlements });
+    }
+
+    syncMonthlySettlements();
 
     if (
       getRecentPlaylistPlays().length === 0 &&
