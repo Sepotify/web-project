@@ -1,6 +1,30 @@
-import type { Album, Artist, Playlist, Song, StorageSchema, User } from "@/types";
+import type {
+  Album,
+  Artist,
+  Notification,
+  Playlist,
+  RecentPlaylistPlay,
+  Song,
+  StorageSchema,
+  Subscription,
+  Ticket,
+  ArtistSettlement,
+  User,
+} from "@/types";
 
 const now = new Date().toISOString();
+
+function daysAgo(days: number): string {
+  const date = new Date();
+  date.setDate(date.getDate() - days);
+  return date.toISOString();
+}
+
+function daysFromNow(days: number): string {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return date.toISOString();
+}
 
 export const MOCK_ARTIST_ID = "artist-sara-1";
 export const MOCK_ALBUM_ID = "album-midnight-echoes";
@@ -16,7 +40,7 @@ export const MOCK_USERS: User[] = [
     subscription: "silver",
     followerIds: ["user-listener-2"],
     followingUserIds: ["user-artist-1"],
-    followingArtistIds: [],
+    followingArtistIds: [MOCK_ARTIST_ID],
     dailyStreamCount: 12,
     birthDate: "2000-05-15",
     gender: "male",
@@ -82,7 +106,23 @@ export const MOCK_USERS: User[] = [
     dailyStreamCount: 0,
     createdAt: now,
   },
+  {
+    id: "user-artist-pending-1",
+    email: "pending@example.com",
+    password: "123456",
+    displayName: "Nova Waves",
+    username: "nova_waves",
+    role: "artist",
+    subscription: "basic",
+    followerIds: [],
+    followingUserIds: [],
+    followingArtistIds: [],
+    dailyStreamCount: 0,
+    createdAt: daysAgo(2),
+  },
 ];
+
+export const MOCK_PENDING_ARTIST_ID = "artist-nova-waves";
 
 export const MOCK_ARTISTS: Artist[] = [
   {
@@ -95,6 +135,18 @@ export const MOCK_ARTISTS: Artist[] = [
     totalListeners: 12800,
     totalStreams: 54000,
     createdAt: now,
+  },
+  {
+    id: MOCK_PENDING_ARTIST_ID,
+    userId: "user-artist-pending-1",
+    stageName: "Nova Waves",
+    portfolioUrl:
+      "https://soundcloud.com/example/nova-waves\nLive sets and ambient demos from 2024-2026.",
+    status: "pending",
+    isVerified: false,
+    totalListeners: 0,
+    totalStreams: 0,
+    createdAt: daysAgo(2),
   },
 ];
 
@@ -140,6 +192,21 @@ export const MOCK_SONGS: Song[] = [
     listenerCount: 4300,
     streamCount: 9200,
     durationSeconds: 248,
+    isEarlyAccess: true,
+    createdAt: now,
+  },
+  {
+    id: "song-aurora-premiere",
+    title: "Aurora Premiere",
+    artistId: MOCK_ARTIST_ID,
+    audioUrl: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3",
+    genre: "Electronic",
+    releaseYear: 2026,
+    featuredArtistIds: [],
+    listenerCount: 1200,
+    streamCount: 800,
+    durationSeconds: 231,
+    isEarlyAccess: true,
     createdAt: now,
   },
   {
@@ -184,10 +251,189 @@ export const MOCK_PLAYLISTS: Playlist[] = [
   },
 ];
 
+export const MOCK_RECENT_PLAYLIST_PLAYS: RecentPlaylistPlay[] = [
+  {
+    id: "recent-play-1",
+    userId: "user-listener-1",
+    playlistId: "playlist-listener-favorites",
+    playedAt: now,
+  },
+];
+
+const SEED_MONTH_KEY = (() => {
+  const date = new Date();
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+})();
+
+export const MOCK_TICKET_ID_1042 = "ticket-1042";
+
+export const MOCK_TICKETS: Ticket[] = [
+  {
+    id: MOCK_TICKET_ID_1042,
+    userId: "user-listener-2",
+    subject: "Upgrade from Basic to Silver",
+    status: "open",
+    messages: [
+      {
+        id: "ticket-msg-1042-1",
+        senderId: "user-listener-2",
+        senderRole: "listener",
+        content: "Hi, I want to upgrade to Silver. How does billing work in Phase 1?",
+        createdAt: daysAgo(0),
+      },
+    ],
+    createdAt: daysAgo(0),
+    updatedAt: daysAgo(0),
+  },
+  {
+    id: "ticket-playback-issue",
+    userId: "user-listener-1",
+    subject: "Playback stops after 30 seconds",
+    status: "in_progress",
+    messages: [
+      {
+        id: "ticket-msg-playback-1",
+        senderId: "user-listener-1",
+        senderRole: "listener",
+        content: "When I play Neon Dreams, the audio stops around the 30 second mark.",
+        createdAt: daysAgo(1),
+      },
+      {
+        id: "ticket-msg-playback-2",
+        senderId: "user-support-1",
+        senderRole: "support",
+        content: "Thanks for reporting this. We are looking into browser playback limits.",
+        createdAt: daysAgo(0),
+      },
+    ],
+    createdAt: daysAgo(1),
+    updatedAt: daysAgo(0),
+  },
+];
+
+export const MOCK_SETTLEMENTS: ArtistSettlement[] = [
+  {
+    id: "settlement-sara-current",
+    artistId: MOCK_ARTIST_ID,
+    monthKey: SEED_MONTH_KEY,
+    uniqueListeners: 12800,
+    streams: 54000,
+    payoutAmount: 108,
+    status: "pending",
+    createdAt: now,
+  },
+];
+
+export const MOCK_SUBSCRIPTIONS: Subscription[] = [
+  {
+    id: "subscription-listener-1",
+    userId: "user-listener-1",
+    tier: "silver",
+    startDate: daysAgo(27),
+    endDate: daysFromNow(3),
+    isActive: true,
+  },
+  {
+    id: "subscription-artist-1",
+    userId: "user-artist-1",
+    tier: "gold",
+    startDate: daysAgo(60),
+    isActive: true,
+  },
+];
+
+export const MOCK_NOTIFICATIONS: Notification[] = [
+  {
+    id: "notification-listener-expiry",
+    userId: "user-listener-1",
+    type: "subscription_expiring",
+    title: "Your Silver plan expires soon",
+    message: "Your subscription ends in 3 days. Renew to keep your playlist limits and perks.",
+    link: "/settings",
+    isRead: false,
+    createdAt: daysAgo(0),
+  },
+  {
+    id: "notification-listener-release",
+    userId: "user-listener-1",
+    type: "new_release",
+    title: "Sara Artist dropped a new single",
+    message: "Solitude is now available. Tap to listen to the latest release.",
+    link: "/albums",
+    isRead: false,
+    createdAt: daysAgo(1),
+  },
+  {
+    id: "notification-listener-release-read",
+    userId: "user-listener-1",
+    type: "new_release",
+    title: "Midnight Echoes album is out",
+    message: "Sara Artist published a new album with 3 tracks.",
+    link: `/albums/${MOCK_ALBUM_ID}`,
+    isRead: true,
+    createdAt: daysAgo(4),
+  },
+  {
+    id: "notification-artist-earnings",
+    userId: "user-artist-1",
+    type: "monthly_earnings",
+    title: "March earnings are ready",
+    message: "Your monthly payout summary is available. Review streams and listener stats.",
+    link: "/artist/works",
+    isRead: false,
+    createdAt: daysAgo(2),
+  },
+  {
+    id: "notification-artist-approval",
+    userId: "user-artist-1",
+    type: "artist_approval",
+    title: "Your artist account was approved",
+    message: "You can now upload music and manage your catalog.",
+    link: "/artist/works",
+    isRead: true,
+    createdAt: daysAgo(10),
+  },
+  {
+    id: "notification-admin-ticket",
+    userId: "user-admin-1",
+    type: "new_ticket",
+    title: "New support ticket opened",
+    message: "A listener reported a playback issue. Review and assign the ticket.",
+    link: `/dashboard/tickets/ticket-playback-issue`,
+    isRead: false,
+    createdAt: daysAgo(0),
+  },
+  {
+    id: "notification-admin-verification",
+    userId: "user-admin-1",
+    type: "artist_verification_request",
+    title: "Artist verification request",
+    message: "A new artist submitted portfolio links for verification review.",
+    link: "/dashboard",
+    isRead: false,
+    createdAt: daysAgo(1),
+  },
+  {
+    id: "notification-support-ticket",
+    userId: "user-support-1",
+    type: "new_ticket",
+    title: "Ticket #1042 needs a response",
+    message: "Jamie Basic asked about upgrading from Basic to Silver.",
+    link: `/dashboard/tickets/${MOCK_TICKET_ID_1042}`,
+    isRead: false,
+    createdAt: daysAgo(0),
+  },
+];
+
 export const MOCK_SEED_DATA: Partial<StorageSchema> = {
   users: MOCK_USERS,
   artists: MOCK_ARTISTS,
   albums: MOCK_ALBUMS,
   songs: MOCK_SONGS,
   playlists: MOCK_PLAYLISTS,
+  recentPlaylistPlays: MOCK_RECENT_PLAYLIST_PLAYS,
+  notifications: MOCK_NOTIFICATIONS,
+  subscriptions: MOCK_SUBSCRIPTIONS,
+  tickets: MOCK_TICKETS,
+  artistSettlements: MOCK_SETTLEMENTS,
 };

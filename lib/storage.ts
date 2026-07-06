@@ -1,5 +1,6 @@
 import {
   DEFAULT_APP_SETTINGS,
+  DEFAULT_SUBSCRIPTION_PRICING,
   EMPTY_STORAGE,
   STORAGE_ROOT_KEY,
 } from "@/lib/storage-keys";
@@ -9,10 +10,12 @@ import type {
   AuthSession,
   Notification,
   Playlist,
+  RecentPlaylistPlay,
   Song,
   StorageSchema,
   Subscription,
   Ticket,
+  ArtistSettlement,
   User,
 } from "@/types";
 
@@ -38,6 +41,10 @@ function readAll(): StorageSchema {
           ...DEFAULT_APP_SETTINGS.notificationPreferences,
           ...parsed.appSettings?.notificationPreferences,
         },
+      },
+      subscriptionPricing: {
+        ...DEFAULT_SUBSCRIPTION_PRICING,
+        ...parsed.subscriptionPricing,
       },
     };
   } catch {
@@ -207,6 +214,40 @@ export function deletePlaylist(id: string): void {
     "playlists",
     getPlaylists().filter((p) => p.id !== id),
   );
+
+  update(
+    "recentPlaylistPlays",
+    getRecentPlaylistPlays().filter((entry) => entry.playlistId !== id),
+  );
+}
+
+// ── Recent playlist plays ──────────────────────────────────────────────────
+
+export function getRecentPlaylistPlays(): RecentPlaylistPlay[] {
+  return readAll().recentPlaylistPlays;
+}
+
+export function getRecentPlaylistPlaysByUser(userId: string): RecentPlaylistPlay[] {
+  return getRecentPlaylistPlays()
+    .filter((entry) => entry.userId === userId)
+    .sort(
+      (a, b) => new Date(b.playedAt).getTime() - new Date(a.playedAt).getTime(),
+    );
+}
+
+export function addRecentPlaylistPlay(entry: RecentPlaylistPlay): void {
+  update("recentPlaylistPlays", [...getRecentPlaylistPlays(), entry]);
+}
+
+export function setRecentPlaylistPlays(entries: RecentPlaylistPlay[]): void {
+  update("recentPlaylistPlays", entries);
+}
+
+export function clearRecentPlaylistPlaysForUser(userId: string): void {
+  update(
+    "recentPlaylistPlays",
+    getRecentPlaylistPlays().filter((entry) => entry.userId !== userId),
+  );
 }
 
 // ── Notifications ──────────────────────────────────────────────────────────
@@ -246,6 +287,10 @@ export function getTickets(): Ticket[] {
   return readAll().tickets;
 }
 
+export function getTicketById(id: string): Ticket | undefined {
+  return getTickets().find((ticket) => ticket.id === id);
+}
+
 export function addTicket(ticket: Ticket): void {
   update("tickets", [...getTickets(), ticket]);
 }
@@ -254,6 +299,32 @@ export function updateTicket(id: string, patch: Partial<Ticket>): void {
   update(
     "tickets",
     getTickets().map((t) => (t.id === id ? { ...t, ...patch } : t)),
+  );
+}
+
+// ── Artist settlements ─────────────────────────────────────────────────────
+
+export function getArtistSettlements(): ArtistSettlement[] {
+  return readAll().artistSettlements;
+}
+
+export function getArtistSettlementById(id: string): ArtistSettlement | undefined {
+  return getArtistSettlements().find((settlement) => settlement.id === id);
+}
+
+export function addArtistSettlement(settlement: ArtistSettlement): void {
+  update("artistSettlements", [...getArtistSettlements(), settlement]);
+}
+
+export function updateArtistSettlement(
+  id: string,
+  patch: Partial<ArtistSettlement>,
+): void {
+  update(
+    "artistSettlements",
+    getArtistSettlements().map((settlement) =>
+      settlement.id === id ? { ...settlement, ...patch } : settlement,
+    ),
   );
 }
 
@@ -326,6 +397,18 @@ export function updateAppSettings(
   });
 }
 
+// ── Subscription Pricing ───────────────────────────────────────────────────
+
+export function getSubscriptionPricing(): StorageSchema["subscriptionPricing"] {
+  return readAll().subscriptionPricing;
+}
+
+export function setSubscriptionPricing(
+  pricing: StorageSchema["subscriptionPricing"],
+): void {
+  update("subscriptionPricing", pricing);
+}
+
 // ── Utility ────────────────────────────────────────────────────────────────
 
 export function resetStorage(): void {
@@ -353,6 +436,11 @@ export function deleteUserAccount(userId: string): boolean {
   update(
     "playlists",
     getPlaylists().filter((playlist) => playlist.userId !== userId),
+  );
+
+  update(
+    "recentPlaylistPlays",
+    getRecentPlaylistPlays().filter((entry) => entry.userId !== userId),
   );
 
   update(

@@ -14,6 +14,7 @@ import {
   validateRequired,
   validateUniqueEmail,
 } from "@/lib/validation";
+import { notifyStaffOfArtistVerificationRequest } from "@/lib/notification-events";
 import type { Artist, Gender, User } from "@/types";
 
 export interface RegisterListenerInput {
@@ -229,6 +230,7 @@ export function registerArtist(input: RegisterArtistInput): RegisterResult {
 
   addUser(user);
   addArtist(artist);
+  notifyStaffOfArtistVerificationRequest(artist);
   addSubscription({
     id: crypto.randomUUID(),
     userId,

@@ -52,6 +52,7 @@ export interface Song {
   listenerCount: number;
   streamCount: number;
   durationSeconds: number;
+  isEarlyAccess?: boolean;
   createdAt: string;
 }
 
@@ -117,6 +118,20 @@ export interface Ticket {
   updatedAt: string;
 }
 
+export type SettlementStatus = "pending" | "paid";
+
+export interface ArtistSettlement {
+  id: string;
+  artistId: string;
+  monthKey: string;
+  uniqueListeners: number;
+  streams: number;
+  payoutAmount: number;
+  status: SettlementStatus;
+  createdAt: string;
+  paidAt?: string;
+}
+
 export interface Subscription {
   id: string;
   userId: string;
@@ -146,16 +161,32 @@ export interface AppSettings {
   notificationPreferences: Record<NotificationType, boolean>;
 }
 
+export interface SubscriptionPricing {
+  silverMonthly: number;
+  goldMonthly: number;
+  updatedAt: string;
+}
+
+export interface RecentPlaylistPlay {
+  id: string;
+  userId: string;
+  playlistId: string;
+  playedAt: string;
+}
+
 export interface StorageSchema {
   users: User[];
   artists: Artist[];
   songs: Song[];
   albums: Album[];
   playlists: Playlist[];
+  recentPlaylistPlays: RecentPlaylistPlay[];
   notifications: Notification[];
   tickets: Ticket[];
+  artistSettlements: ArtistSettlement[];
   subscriptions: Subscription[];
   passwordResetRequests: PasswordResetRequest[];
   authSession: AuthSession | null;
   appSettings: AppSettings;
+  subscriptionPricing: SubscriptionPricing;
 }

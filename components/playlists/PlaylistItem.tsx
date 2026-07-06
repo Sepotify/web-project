@@ -4,8 +4,11 @@ import Link from "next/link";
 import { SongCard } from "@/components/music/SongCard";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { getSongById } from "@/lib/storage";
+import { useToast } from "@/components/ui/Toast";
+import { recordPlaylistPlay } from "@/lib/recent-playlists";
 import { removeSongFromPlaylist } from "@/lib/playlists";
+import { getSongById } from "@/lib/storage";
+import { usePlayer } from "@/hooks/usePlayer";
 import type { Playlist } from "@/types";
 
 interface PlaylistItemProps {
@@ -23,9 +26,29 @@ export function PlaylistItem({
   onDelete,
   onChanged,
 }: PlaylistItemProps) {
+  const { playSong, playQueue } = usePlayer();
+  const { showToast } = useToast();
+
   const songs = playlist.songIds
     .map((songId) => getSongById(songId))
     .filter((song): song is NonNullable<typeof song> => Boolean(song));
+
+  function handlePlaySong(songId: string) {
+    const song = songs.find((item) => item.id === songId);
+    if (!song) return;
+
+    recordPlaylistPlay(userId, playlist.id);
+    playSong(song, songs);
+    showToast(`Now playing: ${song.title}`, "success");
+  }
+
+  function handlePlayAll() {
+    if (songs.length === 0) return;
+
+    recordPlaylistPlay(userId, playlist.id);
+    playQueue(songs, 0);
+    showToast(`Playing: ${playlist.name}`, "success");
+  }
 
   function handleRemoveSong(songId: string) {
     removeSongFromPlaylist(playlist.id, userId, songId);
@@ -45,6 +68,11 @@ export function PlaylistItem({
         </div>
 
         <div className="flex flex-wrap gap-2">
+          {songs.length > 0 && (
+            <Button size="sm" variant="primary" onClick={handlePlayAll}>
+              Play all
+            </Button>
+          )}
           <Link href={`/albums?addTo=${playlist.id}`}>
             <Button size="sm" variant="primary">
               Add songs
@@ -70,6 +98,7 @@ export function PlaylistItem({
               key={song.id}
               song={song}
               compact
+              onPlay={() => handlePlaySong(song.id)}
               actionLabel="Remove"
               onAction={() => handleRemoveSong(song.id)}
             />
