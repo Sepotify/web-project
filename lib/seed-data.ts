@@ -1,6 +1,21 @@
-import type { Album, Artist, Playlist, RecentPlaylistPlay, Song, StorageSchema, User } from "@/types";
+import type {
+  Album,
+  Artist,
+  Notification,
+  Playlist,
+  RecentPlaylistPlay,
+  Song,
+  StorageSchema,
+  User,
+} from "@/types";
 
 const now = new Date().toISOString();
+
+function daysAgo(days: number): string {
+  const date = new Date();
+  date.setDate(date.getDate() - days);
+  return date.toISOString();
+}
 
 export const MOCK_ARTIST_ID = "artist-sara-1";
 export const MOCK_ALBUM_ID = "album-midnight-echoes";
@@ -208,6 +223,89 @@ export const MOCK_RECENT_PLAYLIST_PLAYS: RecentPlaylistPlay[] = [
   },
 ];
 
+export const MOCK_NOTIFICATIONS: Notification[] = [
+  {
+    id: "notification-listener-expiry",
+    userId: "user-listener-1",
+    type: "subscription_expiring",
+    title: "Your Silver plan expires soon",
+    message: "Your subscription ends in 3 days. Renew to keep your playlist limits and perks.",
+    link: "/settings",
+    isRead: false,
+    createdAt: daysAgo(0),
+  },
+  {
+    id: "notification-listener-release",
+    userId: "user-listener-1",
+    type: "new_release",
+    title: "Sara Artist dropped a new single",
+    message: "Solitude is now available. Tap to listen to the latest release.",
+    link: "/albums",
+    isRead: false,
+    createdAt: daysAgo(1),
+  },
+  {
+    id: "notification-listener-release-read",
+    userId: "user-listener-1",
+    type: "new_release",
+    title: "Midnight Echoes album is out",
+    message: "Sara Artist published a new album with 3 tracks.",
+    link: `/albums/${MOCK_ALBUM_ID}`,
+    isRead: true,
+    createdAt: daysAgo(4),
+  },
+  {
+    id: "notification-artist-earnings",
+    userId: "user-artist-1",
+    type: "monthly_earnings",
+    title: "March earnings are ready",
+    message: "Your monthly payout summary is available. Review streams and listener stats.",
+    link: "/artist/works",
+    isRead: false,
+    createdAt: daysAgo(2),
+  },
+  {
+    id: "notification-artist-approval",
+    userId: "user-artist-1",
+    type: "artist_approval",
+    title: "Your artist account was approved",
+    message: "You can now upload music and manage your catalog.",
+    link: "/artist/works",
+    isRead: true,
+    createdAt: daysAgo(10),
+  },
+  {
+    id: "notification-admin-ticket",
+    userId: "user-admin-1",
+    type: "new_ticket",
+    title: "New support ticket opened",
+    message: "A listener reported a playback issue. Review and assign the ticket.",
+    link: "/dashboard",
+    isRead: false,
+    createdAt: daysAgo(0),
+  },
+  {
+    id: "notification-admin-verification",
+    userId: "user-admin-1",
+    type: "artist_verification_request",
+    title: "Artist verification request",
+    message: "A new artist submitted portfolio links for verification review.",
+    link: "/dashboard",
+    isRead: false,
+    createdAt: daysAgo(1),
+  },
+  {
+    id: "notification-support-ticket",
+    userId: "user-support-1",
+    type: "new_ticket",
+    title: "Ticket #1042 needs a response",
+    message: "Jamie Basic asked about upgrading from Basic to Silver.",
+    link: "/dashboard",
+    isRead: false,
+    createdAt: daysAgo(0),
+  },
+];
+
 export const MOCK_SEED_DATA: Partial<StorageSchema> = {
   users: MOCK_USERS,
   artists: MOCK_ARTISTS,
@@ -215,4 +313,5 @@ export const MOCK_SEED_DATA: Partial<StorageSchema> = {
   songs: MOCK_SONGS,
   playlists: MOCK_PLAYLISTS,
   recentPlaylistPlays: MOCK_RECENT_PLAYLIST_PLAYS,
+  notifications: MOCK_NOTIFICATIONS,
 };

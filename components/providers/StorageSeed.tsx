@@ -6,6 +6,7 @@ import {
 } from "@/lib/seed-data";
 import {
   addSong,
+  getNotifications,
   getRecentPlaylistPlays,
   getSongById,
   getSongs,
@@ -56,6 +57,10 @@ export function StorageSeed({ children }: { children: React.ReactNode }) {
       MOCK_SEED_DATA.recentPlaylistPlays?.length
     ) {
       seedStorage({ recentPlaylistPlays: MOCK_SEED_DATA.recentPlaylistPlays });
+    }
+
+    if (getNotifications().length === 0 && MOCK_SEED_DATA.notifications?.length) {
+      seedStorage({ notifications: MOCK_SEED_DATA.notifications });
     }
   }, []);
 
