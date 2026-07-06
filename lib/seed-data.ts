@@ -6,6 +6,7 @@ import type {
   RecentPlaylistPlay,
   Song,
   StorageSchema,
+  Subscription,
   User,
 } from "@/types";
 
@@ -14,6 +15,12 @@ const now = new Date().toISOString();
 function daysAgo(days: number): string {
   const date = new Date();
   date.setDate(date.getDate() - days);
+  return date.toISOString();
+}
+
+function daysFromNow(days: number): string {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
   return date.toISOString();
 }
 
@@ -31,7 +38,7 @@ export const MOCK_USERS: User[] = [
     subscription: "silver",
     followerIds: ["user-listener-2"],
     followingUserIds: ["user-artist-1"],
-    followingArtistIds: [],
+    followingArtistIds: [MOCK_ARTIST_ID],
     dailyStreamCount: 12,
     birthDate: "2000-05-15",
     gender: "male",
@@ -223,6 +230,24 @@ export const MOCK_RECENT_PLAYLIST_PLAYS: RecentPlaylistPlay[] = [
   },
 ];
 
+export const MOCK_SUBSCRIPTIONS: Subscription[] = [
+  {
+    id: "subscription-listener-1",
+    userId: "user-listener-1",
+    tier: "silver",
+    startDate: daysAgo(27),
+    endDate: daysFromNow(3),
+    isActive: true,
+  },
+  {
+    id: "subscription-artist-1",
+    userId: "user-artist-1",
+    tier: "gold",
+    startDate: daysAgo(60),
+    isActive: true,
+  },
+];
+
 export const MOCK_NOTIFICATIONS: Notification[] = [
   {
     id: "notification-listener-expiry",
@@ -314,4 +339,5 @@ export const MOCK_SEED_DATA: Partial<StorageSchema> = {
   playlists: MOCK_PLAYLISTS,
   recentPlaylistPlays: MOCK_RECENT_PLAYLIST_PLAYS,
   notifications: MOCK_NOTIFICATIONS,
+  subscriptions: MOCK_SUBSCRIPTIONS,
 };

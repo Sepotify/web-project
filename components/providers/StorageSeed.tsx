@@ -4,12 +4,14 @@ import { useEffect } from "react";
 import {
   MOCK_SEED_DATA,
 } from "@/lib/seed-data";
+import { runNotificationChecks } from "@/lib/notification-sync";
 import {
   addSong,
   getNotifications,
   getRecentPlaylistPlays,
   getSongById,
   getSongs,
+  getSubscriptions,
   getUsers,
   seedStorage,
   updateSong,
@@ -62,6 +64,12 @@ export function StorageSeed({ children }: { children: React.ReactNode }) {
     if (getNotifications().length === 0 && MOCK_SEED_DATA.notifications?.length) {
       seedStorage({ notifications: MOCK_SEED_DATA.notifications });
     }
+
+    if (getSubscriptions().length === 0 && MOCK_SEED_DATA.subscriptions?.length) {
+      seedStorage({ subscriptions: MOCK_SEED_DATA.subscriptions });
+    }
+
+    runNotificationChecks();
   }, []);
 
   return children;
