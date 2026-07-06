@@ -1,5 +1,6 @@
 import {
   DEFAULT_APP_SETTINGS,
+  DEFAULT_SUBSCRIPTION_PRICING,
   EMPTY_STORAGE,
   STORAGE_ROOT_KEY,
 } from "@/lib/storage-keys";
@@ -40,6 +41,10 @@ function readAll(): StorageSchema {
           ...DEFAULT_APP_SETTINGS.notificationPreferences,
           ...parsed.appSettings?.notificationPreferences,
         },
+      },
+      subscriptionPricing: {
+        ...DEFAULT_SUBSCRIPTION_PRICING,
+        ...parsed.subscriptionPricing,
       },
     };
   } catch {
@@ -390,6 +395,18 @@ export function updateAppSettings(
       ? { ...current.notificationPreferences, ...patch.notificationPreferences }
       : current.notificationPreferences,
   });
+}
+
+// ── Subscription Pricing ───────────────────────────────────────────────────
+
+export function getSubscriptionPricing(): StorageSchema["subscriptionPricing"] {
+  return readAll().subscriptionPricing;
+}
+
+export function setSubscriptionPricing(
+  pricing: StorageSchema["subscriptionPricing"],
+): void {
+  update("subscriptionPricing", pricing);
 }
 
 // ── Utility ────────────────────────────────────────────────────────────────

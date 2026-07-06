@@ -18,7 +18,14 @@ export const STORAGE_KEYS = {
   passwordResetRequests: "passwordResetRequests",
   authSession: "authSession",
   appSettings: "appSettings",
+  subscriptionPricing: "subscriptionPricing",
 } as const satisfies Record<keyof StorageSchema, string>;
+
+export const DEFAULT_SUBSCRIPTION_PRICING: StorageSchema["subscriptionPricing"] = {
+  silverMonthly: 4.99,
+  goldMonthly: 9.99,
+  updatedAt: new Date(0).toISOString(),
+};
 
 export const DEFAULT_APP_SETTINGS: StorageSchema["appSettings"] = {
   language: "en",
@@ -48,6 +55,7 @@ export const EMPTY_STORAGE: StorageSchema = {
   passwordResetRequests: [],
   authSession: null,
   appSettings: DEFAULT_APP_SETTINGS,
+  subscriptionPricing: DEFAULT_SUBSCRIPTION_PRICING,
 };
 
 /**
@@ -66,4 +74,5 @@ export const EMPTY_STORAGE: StorageSchema = {
  * passwordResetRequests: PasswordResetRequest[]
  * authSession:  { userId, role } | null
  * appSettings:  { language, defaultVolume, notificationPreferences }
+ * subscriptionPricing: { silverMonthly, goldMonthly, updatedAt }
  */

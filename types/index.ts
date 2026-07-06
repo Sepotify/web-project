@@ -161,6 +161,12 @@ export interface AppSettings {
   notificationPreferences: Record<NotificationType, boolean>;
 }
 
+export interface SubscriptionPricing {
+  silverMonthly: number;
+  goldMonthly: number;
+  updatedAt: string;
+}
+
 export interface RecentPlaylistPlay {
   id: string;
   userId: string;
@@ -182,4 +188,5 @@ export interface StorageSchema {
   passwordResetRequests: PasswordResetRequest[];
   authSession: AuthSession | null;
   appSettings: AppSettings;
+  subscriptionPricing: SubscriptionPricing;
 }
