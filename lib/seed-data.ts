@@ -104,7 +104,23 @@ export const MOCK_USERS: User[] = [
     dailyStreamCount: 0,
     createdAt: now,
   },
+  {
+    id: "user-artist-pending-1",
+    email: "pending@example.com",
+    password: "123456",
+    displayName: "Nova Waves",
+    username: "nova_waves",
+    role: "artist",
+    subscription: "basic",
+    followerIds: [],
+    followingUserIds: [],
+    followingArtistIds: [],
+    dailyStreamCount: 0,
+    createdAt: daysAgo(2),
+  },
 ];
+
+export const MOCK_PENDING_ARTIST_ID = "artist-nova-waves";
 
 export const MOCK_ARTISTS: Artist[] = [
   {
@@ -117,6 +133,18 @@ export const MOCK_ARTISTS: Artist[] = [
     totalListeners: 12800,
     totalStreams: 54000,
     createdAt: now,
+  },
+  {
+    id: MOCK_PENDING_ARTIST_ID,
+    userId: "user-artist-pending-1",
+    stageName: "Nova Waves",
+    portfolioUrl:
+      "https://soundcloud.com/example/nova-waves\nLive sets and ambient demos from 2024-2026.",
+    status: "pending",
+    isVerified: false,
+    totalListeners: 0,
+    totalStreams: 0,
+    createdAt: daysAgo(2),
   },
 ];
 

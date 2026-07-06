@@ -6,16 +6,37 @@ import {
 } from "@/lib/seed-data";
 import { runNotificationChecks } from "@/lib/notification-sync";
 import {
+  addArtist,
   addSong,
+  addUser,
+  getArtistById,
   getNotifications,
   getRecentPlaylistPlays,
   getSongById,
   getSongs,
   getSubscriptions,
+  getUserById,
   getUsers,
   seedStorage,
   updateSong,
 } from "@/lib/storage";
+
+function syncSeedArtists(): void {
+  const seedUsers = MOCK_SEED_DATA.users ?? [];
+  const seedArtists = MOCK_SEED_DATA.artists ?? [];
+
+  for (const seedUser of seedUsers) {
+    if (!getUserById(seedUser.id)) {
+      addUser(seedUser);
+    }
+  }
+
+  for (const seedArtist of seedArtists) {
+    if (!getArtistById(seedArtist.id)) {
+      addArtist(seedArtist);
+    }
+  }
+}
 
 function syncSeedSongs(): void {
   const seedSongs = MOCK_SEED_DATA.songs ?? [];
@@ -53,6 +74,7 @@ export function StorageSeed({ children }: { children: React.ReactNode }) {
     }
 
     syncSeedSongs();
+    syncSeedArtists();
 
     if (
       getRecentPlaylistPlays().length === 0 &&
