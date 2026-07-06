@@ -9,6 +9,7 @@ import {
   moveQueueItem,
   shuffleSongs,
 } from "@/lib/player-utils";
+import { incrementDailyStreamCount } from "@/lib/streaming";
 import { getAppSettings } from "@/lib/storage";
 import type { Song } from "@/types";
 import type { RepeatMode } from "@/types/player";
@@ -133,6 +134,10 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       const url = getSongAudioUrl(song);
       audio.loadTrack(url, volumeRef.current, autoplay);
       setIsPlaying(autoplay);
+
+      if (autoplay) {
+        incrementDailyStreamCount();
+      }
     },
     [audio],
   );

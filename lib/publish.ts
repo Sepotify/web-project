@@ -55,10 +55,10 @@ export function validatePublishReleaseInput(
 ): PublishReleaseErrors {
   const errors: PublishReleaseErrors = {};
 
-  const titleError = validateRequired(input.title, "Title");
+  const titleError = validateRequired(input.title ?? "", "Title");
   if (titleError) errors.title = titleError;
 
-  const genreError = validateRequired(input.genre, "Genre");
+  const genreError = validateRequired(input.genre ?? "", "Genre");
   if (genreError) errors.genre = genreError;
 
   if (!input.releaseYear) {

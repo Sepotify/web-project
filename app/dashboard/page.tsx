@@ -1,14 +1,10 @@
-"use client";
-
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense } from "react";
+import { DashboardIndexRedirect } from "@/components/dashboard/DashboardIndexRedirect";
 
 export default function DashboardIndexPage() {
-  const router = useRouter();
-
-  useEffect(() => {
-    router.replace("/dashboard/artists");
-  }, [router]);
-
-  return null;
+  return (
+    <Suspense fallback={null}>
+      <DashboardIndexRedirect />
+    </Suspense>
+  );
 }

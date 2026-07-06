@@ -74,6 +74,7 @@ function TicketChatContent({ ticketId }: { ticketId: string }) {
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!user) return;
 
     const result = replyToTicket(ticket.id, user.id, user.role, message);
     if (!result.success) {

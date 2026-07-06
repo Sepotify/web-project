@@ -9,20 +9,28 @@ import { NotificationSettings } from "@/components/settings/NotificationSettings
 import { SettingsSection } from "@/components/settings/SettingsSection";
 import { SoundSettings } from "@/components/settings/SoundSettings";
 import { SubscriptionSettings } from "@/components/settings/SubscriptionSettings";
+import { SupportTicketForm } from "@/components/settings/SupportTicketForm";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { useAppSettings } from "@/hooks/useAppSettings";
+import {
+  getUserNotificationPreferences,
+  updateUserNotificationPreference,
+} from "@/lib/notification-preferences";
 import { deleteUserAccount } from "@/lib/storage";
 import { useAuth } from "@/store/AuthContext";
 import type { NotificationType } from "@/types";
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { user, isAuthenticated, isLoading, logout } = useAuth();
+  const { user, isAuthenticated, isLoading, logout, refreshUser } = useAuth();
   const { settings, updateSettings } = useAppSettings();
   const { showToast } = useToast();
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [notificationPreferences, setNotificationPreferences] = useState(() =>
+    user ? getUserNotificationPreferences(user.id) : null,
+  );
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -30,10 +38,18 @@ export default function SettingsPage() {
     }
   }, [isAuthenticated, isLoading, router]);
 
+  useEffect(() => {
+    if (user) {
+      setNotificationPreferences(getUserNotificationPreferences(user.id));
+    }
+  }, [user]);
+
   function handleNotificationChange(type: NotificationType, enabled: boolean) {
-    updateSettings({
-      notificationPreferences: { [type]: enabled },
-    });
+    if (!user) return;
+
+    updateUserNotificationPreference(user.id, type, enabled);
+    setNotificationPreferences(getUserNotificationPreferences(user.id));
+    refreshUser();
     showToast("Notification preference updated.", "success");
   }
 
@@ -65,7 +81,7 @@ export default function SettingsPage() {
     router.replace("/login");
   }
 
-  if (isLoading || !user) {
+  if (isLoading || !user || !notificationPreferences) {
     return (
       <AppShell>
         <div className="flex min-h-[40vh] items-center justify-center">
@@ -98,10 +114,24 @@ export default function SettingsPage() {
         >
           <NotificationSettings
             role={user.role}
-            preferences={settings.notificationPreferences}
+            preferences={notificationPreferences}
             onChange={handleNotificationChange}
           />
         </SettingsSection>
+
+        {(user.role === "listener" || user.role === "artist") && (
+          <SettingsSection
+            title="Support"
+            description="Open a ticket when you need help from the support team."
+          >
+            <SupportTicketForm
+              userId={user.id}
+              onSubmitted={() => {
+                showToast("Support ticket submitted. Staff will follow up soon.", "success");
+              }}
+            />
+          </SettingsSection>
+        )}
 
         <SettingsSection
           title="Language"

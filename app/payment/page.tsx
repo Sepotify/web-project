@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { SUBSCRIPTION_LABELS } from "@/lib/profile";
+import { getSubscriptionPricing } from "@/lib/storage";
 import { useAuth } from "@/store/AuthContext";
 
 export default function PaymentPage() {
@@ -29,6 +30,8 @@ export default function PaymentPage() {
       </AppShell>
     );
   }
+
+  const pricing = getSubscriptionPricing();
 
   return (
     <AppShell>
@@ -56,10 +59,16 @@ export default function PaymentPage() {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Card className="bg-bg-primary">
               <h2 className="font-semibold text-text-primary">Silver</h2>
+              <p className="mt-1 text-lg font-bold text-accent-primary">
+                ${pricing.silverMonthly.toFixed(2)}/mo
+              </p>
               <p className="mt-1 text-sm text-text-muted">Up to 100 playlists</p>
             </Card>
             <Card className="bg-bg-primary">
               <h2 className="font-semibold text-text-primary">Gold</h2>
+              <p className="mt-1 text-lg font-bold text-accent-primary">
+                ${pricing.goldMonthly.toFixed(2)}/mo
+              </p>
               <p className="mt-1 text-sm text-text-muted">Unlimited playlists + premium perks</p>
             </Card>
           </div>
