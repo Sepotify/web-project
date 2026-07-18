@@ -1,0 +1,14 @@
+.env
+*.sqlite3
+db.sqlite3
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+media/avatars/*
+!media/avatars/.gitkeep
+staticfiles/
+.pytest_cache/
+.mypy_cache/
+*.log

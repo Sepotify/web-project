@@ -1,54 +1,9 @@
-# Local / course files (not part of the main app)
-*.pdf
-چک_لیست_فاز_اول.md
-8- Django Task Project/
-
-# Sam Only
-/information
-
-# Dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
-
-# Testing
-/coverage
-
-# Next.js
-/.next/
-/out/
-
-# Production
-/build
-
-# Misc
-.DS_Store
-*.pem
-
-# Debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# Env files
 .env
-.env*.local
-
-# Vercel
-.vercel
-
-# TypeScript
-*.tsbuildinfo
-next-env.d.ts
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
+backend/.env
+backend/db.sqlite3
+backend/**/__pycache__/
+backend/**/*.pyc
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
