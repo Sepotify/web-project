@@ -18,6 +18,7 @@ urlpatterns = [
     path("api/", include("accounts.urls")),
     path("api/", include("notifications.urls")),
     path("api/", include("subscriptions.urls")),
+    path("api/", include("music.urls")),
 ]
 
 if settings.DEBUG:
