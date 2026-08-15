@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from accounts.models import ArtistProfile, ArtistStatus
-from music.models import Album, Song
+from music.models import Album, Playlist, Song
 
 MIN_RELEASE_YEAR = 1900
 MAX_RELEASE_YEAR = 2100
@@ -150,6 +150,21 @@ class ArtistWorksSerializer(serializers.ModelSerializer):
     def get_singles(self, obj):
         singles = obj.songs.filter(album__isnull=True).select_related("artist", "album")
         return SongSerializer(singles, many=True, context=self.context).data
+
+
+class PlaylistSerializer(serializers.ModelSerializer):
+    user_id = serializers.IntegerField(read_only=True)
+    song_ids = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Playlist
+        fields = ["id", "user_id", "name", "song_ids", "created_at", "updated_at"]
+        read_only_fields = fields
+
+    def get_song_ids(self, obj):
+        return list(
+            obj.playlist_songs.order_by("order", "id").values_list("song_id", flat=True)
+        )
 
 
 class AlbumWriteSerializer(serializers.ModelSerializer):

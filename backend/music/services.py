@@ -1,6 +1,9 @@
 from django.db.models import Q, QuerySet
 from django.db.models.functions import Coalesce
 
+from accounts.models import ArtistStatus
+from music.models import Album, Playlist, Song
+
 CATALOG_SORT_CHOICES = (
     "newest",
     "oldest",
@@ -33,3 +36,30 @@ def apply_catalog_sort(queryset: QuerySet, sort: str) -> QuerySet:
         "title_asc": ("title",),
     }[key]
     return queryset.order_by(*ordering)
+
+
+HOME_ALBUM_LIMIT = 6
+HOME_PLAYLIST_LIMIT = 6
+HOME_SONG_LIMIT = 6
+
+
+def get_home_feed(user):
+    albums = apply_catalog_sort(
+        Album.objects.filter(artist__status=ArtistStatus.APPROVED).select_related("artist"),
+        "newest",
+    )[:HOME_ALBUM_LIMIT]
+
+    songs = apply_catalog_sort(
+        Song.objects.filter(artist__status=ArtistStatus.APPROVED)
+        .select_related("artist", "album")
+        .prefetch_related("featured_artists"),
+        "most_listeners",
+    )[:HOME_SONG_LIMIT]
+
+    playlists = Playlist.objects.filter(user=user).order_by("-updated_at")[:HOME_PLAYLIST_LIMIT]
+
+    return {
+        "recent_playlists": list(playlists),
+        "latest_albums": list(albums),
+        "popular_songs": list(songs),
+    }

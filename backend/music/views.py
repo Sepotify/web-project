@@ -13,10 +13,11 @@ from music.serializers import (
     AlbumSerializer,
     AlbumWriteSerializer,
     ArtistWorksSerializer,
+    PlaylistSerializer,
     SongSerializer,
     SongWriteSerializer,
 )
-from music.services import apply_catalog_search, apply_catalog_sort
+from music.services import apply_catalog_search, apply_catalog_sort, get_home_feed
 
 
 def _artist_profile(request):
@@ -204,4 +205,27 @@ class ArtistWorksView(APIView):
         )
         return Response(
             ArtistWorksSerializer(artist, context={"request": request}).data
+        )
+
+
+class HomeFeedView(APIView):
+    """Home shelves: recent playlists, latest albums, and popular songs."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        feed = get_home_feed(request.user)
+        context = {"request": request}
+        return Response(
+            {
+                "recent_playlists": PlaylistSerializer(
+                    feed["recent_playlists"], many=True, context=context
+                ).data,
+                "latest_albums": AlbumSerializer(
+                    feed["latest_albums"], many=True, context=context
+                ).data,
+                "popular_songs": SongSerializer(
+                    feed["popular_songs"], many=True, context=context
+                ).data,
+            }
         )

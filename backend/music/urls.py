@@ -8,11 +8,13 @@ from music.views import (
     ArtistSongDetailView,
     ArtistSongListCreateView,
     ArtistWorksView,
+    HomeFeedView,
     SongCatalogView,
     SongDetailView,
 )
 
 urlpatterns = [
+    path("home/", HomeFeedView.as_view(), name="home-feed"),
     path("albums/", AlbumCatalogView.as_view(), name="albums-catalog"),
     path("albums/<int:pk>/", AlbumDetailView.as_view(), name="albums-detail"),
     path("songs/", SongCatalogView.as_view(), name="songs-catalog"),
