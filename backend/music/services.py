@@ -1,9 +1,15 @@
-from django.db.models import Max, Q, QuerySet
+from django.db import transaction
+from django.db.models import F, Max, Q, QuerySet
 from django.db.models.functions import Coalesce
 
 from accounts.models import ArtistStatus
-from music.models import Album, Playlist, PlaylistSong, Song
-from subscriptions.services import can_early_access, get_user_tier, max_playlists
+from music.models import Album, Playlist, PlaylistSong, Song, StreamEvent
+from subscriptions.services import (
+    can_early_access,
+    get_user_tier,
+    max_playlists,
+    reset_daily_streams_if_needed,
+)
 
 CATALOG_SORT_CHOICES = (
     "newest",
@@ -119,3 +125,57 @@ def remove_song_from_playlist(playlist: Playlist, song: Song) -> tuple[bool, str
         return False, "This song is not in the playlist."
     playlist.save(update_fields=["updated_at"])
     return True, "Song removed from playlist."
+
+
+@transaction.atomic
+def record_stream(user, song: Song) -> tuple[StreamEvent | None, str | None]:
+    """Register a play: persist StreamEvent and bump song/artist/album counters."""
+    if song.artist.status != ArtistStatus.APPROVED:
+        return None, "This song is not available."
+    if song.is_early_access and not can_early_access(user):
+        return None, "This early-access track is only available on the gold plan."
+
+    reset_daily_streams_if_needed(user)
+
+    is_new_song_listener = not StreamEvent.objects.filter(user=user, song=song).exists()
+    is_new_artist_listener = not StreamEvent.objects.filter(
+        user=user, song__artist_id=song.artist_id
+    ).exists()
+    is_new_album_listener = False
+    if song.album_id:
+        is_new_album_listener = not StreamEvent.objects.filter(
+            user=user, song__album_id=song.album_id
+        ).exists()
+
+    event = StreamEvent.objects.create(user=user, song=song)
+
+    song.stream_count = F("stream_count") + 1
+    song_fields = ["stream_count", "updated_at"]
+    if is_new_song_listener:
+        song.listener_count = F("listener_count") + 1
+        song_fields.append("listener_count")
+    song.save(update_fields=song_fields)
+
+    artist = song.artist
+    artist.total_streams = F("total_streams") + 1
+    artist_fields = ["total_streams", "updated_at"]
+    if is_new_artist_listener:
+        artist.total_listeners = F("total_listeners") + 1
+        artist_fields.append("total_listeners")
+    artist.save(update_fields=artist_fields)
+
+    if song.album_id:
+        album = song.album
+        album.stream_count = F("stream_count") + 1
+        album_fields = ["stream_count", "updated_at"]
+        if is_new_album_listener:
+            album.listener_count = F("listener_count") + 1
+            album_fields.append("listener_count")
+        album.save(update_fields=album_fields)
+
+    user.daily_stream_count = F("daily_stream_count") + 1
+    user.save(update_fields=["daily_stream_count"])
+    user.refresh_from_db(fields=["daily_stream_count", "daily_stream_reset_date"])
+    song.refresh_from_db()
+
+    return event, None
