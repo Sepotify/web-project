@@ -7,13 +7,15 @@ from rest_framework.views import APIView
 
 from accounts.models import ArtistProfile, ArtistStatus
 from accounts.permissions import IsApprovedArtist
-from music.models import Album, Song
+from music.models import Album, Playlist, Song
 from music.serializers import (
     AlbumDetailSerializer,
     AlbumSerializer,
     AlbumWriteSerializer,
     ArtistWorksSerializer,
+    PlaylistDetailSerializer,
     PlaylistSerializer,
+    PlaylistWriteSerializer,
     SongSerializer,
     SongWriteSerializer,
 )
@@ -275,3 +277,61 @@ class HomeFeedView(APIView):
                 ).data,
             }
         )
+
+
+class PlaylistListCreateView(APIView):
+    """List and create playlists owned by the current user."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        playlists = Playlist.objects.filter(user=request.user)
+        return Response(
+            PlaylistSerializer(playlists, many=True, context={"request": request}).data
+        )
+
+    def post(self, request):
+        serializer = PlaylistWriteSerializer(
+            data=request.data,
+            context={"request": request},
+        )
+        serializer.is_valid(raise_exception=True)
+        playlist = serializer.save()
+        return Response(
+            PlaylistDetailSerializer(playlist, context={"request": request}).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class PlaylistDetailView(APIView):
+    """Retrieve, rename, or delete a playlist owned by the current user."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, request, pk):
+        return get_object_or_404(Playlist, pk=pk, user=request.user)
+
+    def get(self, request, pk):
+        playlist = self.get_object(request, pk)
+        return Response(
+            PlaylistDetailSerializer(playlist, context={"request": request}).data
+        )
+
+    def patch(self, request, pk):
+        playlist = self.get_object(request, pk)
+        serializer = PlaylistWriteSerializer(
+            playlist,
+            data=request.data,
+            partial=True,
+            context={"request": request},
+        )
+        serializer.is_valid(raise_exception=True)
+        playlist = serializer.save()
+        return Response(
+            PlaylistDetailSerializer(playlist, context={"request": request}).data
+        )
+
+    def delete(self, request, pk):
+        playlist = self.get_object(request, pk)
+        playlist.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

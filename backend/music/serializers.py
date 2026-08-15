@@ -223,6 +223,38 @@ class PlaylistSerializer(serializers.ModelSerializer):
         )
 
 
+class PlaylistDetailSerializer(PlaylistSerializer):
+    songs = serializers.SerializerMethodField()
+
+    class Meta(PlaylistSerializer.Meta):
+        fields = list(PlaylistSerializer.Meta.fields) + ["songs"]
+
+    def get_songs(self, obj):
+        entries = obj.playlist_songs.select_related(
+            "song__artist",
+            "song__album",
+        ).prefetch_related("song__featured_artists")
+        songs = [entry.song for entry in entries]
+        return SongSerializer(songs, many=True, context=self.context).data
+
+
+class PlaylistWriteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Playlist
+        fields = ["name"]
+
+    def validate_name(self, value):
+        name = value.strip()
+        if not name:
+            raise serializers.ValidationError("Playlist name is required.")
+        if len(name) > 80:
+            raise serializers.ValidationError("Playlist name must be 80 characters or less.")
+        return name
+
+    def create(self, validated_data):
+        return Playlist.objects.create(user=self.context["request"].user, **validated_data)
+
+
 class AlbumWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Album
