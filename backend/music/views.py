@@ -15,14 +15,18 @@ from music.serializers import (
     ArtistWorksSerializer,
     PlaylistDetailSerializer,
     PlaylistSerializer,
+    PlaylistSongWriteSerializer,
     PlaylistWriteSerializer,
     SongSerializer,
     SongWriteSerializer,
 )
 from music.services import (
+    add_song_to_playlist,
     apply_catalog_search,
     apply_catalog_sort,
+    can_create_user_playlist,
     get_home_feed,
+    remove_song_from_playlist,
     visible_songs_for_user,
 )
 
@@ -291,6 +295,10 @@ class PlaylistListCreateView(APIView):
         )
 
     def post(self, request):
+        allowed, message = can_create_user_playlist(request.user)
+        if not allowed:
+            return Response({"detail": message}, status=status.HTTP_403_FORBIDDEN)
+
         serializer = PlaylistWriteSerializer(
             data=request.data,
             context={"request": request},
@@ -335,3 +343,41 @@ class PlaylistDetailView(APIView):
         playlist = self.get_object(request, pk)
         playlist.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class PlaylistSongView(APIView):
+    """Add or remove a song on a playlist owned by the current user."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get_playlist(self, request, pk):
+        return get_object_or_404(Playlist, pk=pk, user=request.user)
+
+    def post(self, request, pk):
+        playlist = self.get_playlist(request, pk)
+        serializer = PlaylistSongWriteSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        song = get_object_or_404(
+            Song,
+            pk=serializer.validated_data["song_id"],
+            artist__status=ArtistStatus.APPROVED,
+        )
+        ok, message = add_song_to_playlist(playlist, song, request.user)
+        if not ok:
+            return Response({"detail": message}, status=status.HTTP_400_BAD_REQUEST)
+        playlist.refresh_from_db()
+        return Response(
+            PlaylistDetailSerializer(playlist, context={"request": request}).data,
+            status=status.HTTP_200_OK,
+        )
+
+    def delete(self, request, pk, song_id):
+        playlist = self.get_playlist(request, pk)
+        song = get_object_or_404(Song, pk=song_id)
+        ok, message = remove_song_from_playlist(playlist, song)
+        if not ok:
+            return Response({"detail": message}, status=status.HTTP_400_BAD_REQUEST)
+        playlist.refresh_from_db()
+        return Response(
+            PlaylistDetailSerializer(playlist, context={"request": request}).data
+        )

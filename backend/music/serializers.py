@@ -249,10 +249,26 @@ class PlaylistWriteSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Playlist name is required.")
         if len(name) > 80:
             raise serializers.ValidationError("Playlist name must be 80 characters or less.")
+
+        user = self.context["request"].user
+        qs = Playlist.objects.filter(user=user, name__iexact=name)
+        if self.instance is not None:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise serializers.ValidationError("You already have a playlist with this name.")
         return name
 
     def create(self, validated_data):
         return Playlist.objects.create(user=self.context["request"].user, **validated_data)
+
+
+class PlaylistSongWriteSerializer(serializers.Serializer):
+    song_id = serializers.IntegerField()
+
+    def validate_song_id(self, value):
+        if not Song.objects.filter(pk=value, artist__status=ArtistStatus.APPROVED).exists():
+            raise serializers.ValidationError("Song not found.")
+        return value
 
 
 class AlbumWriteSerializer(serializers.ModelSerializer):
