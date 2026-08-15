@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from accounts.models import ArtistProfile, ArtistStatus
 from music.models import Album, Playlist, Song
+from subscriptions.services import can_early_access, can_see_stats
 
 MIN_RELEASE_YEAR = 1900
 MAX_RELEASE_YEAR = 2100
@@ -13,6 +14,29 @@ def _absolute_media_url(request, file_field):
     if request:
         return request.build_absolute_uri(file_field.url)
     return file_field.url
+
+
+def _viewer(context):
+    request = context.get("request")
+    return getattr(request, "user", None)
+
+
+def _reveal_restricted(context) -> bool:
+    return bool(context.get("reveal_restricted"))
+
+
+def _viewer_can_see_stats(context) -> bool:
+    if _reveal_restricted(context):
+        return True
+    user = _viewer(context)
+    return bool(user and user.is_authenticated and can_see_stats(user))
+
+
+def _viewer_can_see_early_access(context) -> bool:
+    if _reveal_restricted(context):
+        return True
+    user = _viewer(context)
+    return bool(user and user.is_authenticated and can_early_access(user))
 
 
 def _validate_release_year(value):
@@ -55,9 +79,17 @@ class AlbumSerializer(serializers.ModelSerializer):
         return _absolute_media_url(self.context.get("request"), obj.cover)
 
     def get_song_ids(self, obj):
-        if hasattr(obj, "prefetched_song_ids"):
-            return list(obj.prefetched_song_ids)
-        return list(obj.songs.order_by("id").values_list("id", flat=True))
+        songs = obj.songs.order_by("id")
+        if not _viewer_can_see_early_access(self.context):
+            songs = songs.filter(is_early_access=False)
+        return list(songs.values_list("id", flat=True))
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if not _viewer_can_see_stats(self.context):
+            data["listener_count"] = None
+            data["stream_count"] = None
+        return data
 
 
 class SongSerializer(serializers.ModelSerializer):
@@ -109,12 +141,27 @@ class SongSerializer(serializers.ModelSerializer):
     def get_audio_url(self, obj):
         return _absolute_media_url(self.context.get("request"), obj.audio)
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if not _viewer_can_see_stats(self.context):
+            data["listener_count"] = None
+            data["stream_count"] = None
+        return data
+
 
 class AlbumDetailSerializer(AlbumSerializer):
-    songs = SongSerializer(many=True, read_only=True)
+    songs = serializers.SerializerMethodField()
 
     class Meta(AlbumSerializer.Meta):
         fields = list(AlbumSerializer.Meta.fields) + ["songs"]
+
+    def get_songs(self, obj):
+        songs = obj.songs.select_related("artist", "album").prefetch_related(
+            "featured_artists"
+        )
+        if not _viewer_can_see_early_access(self.context):
+            songs = songs.filter(is_early_access=False)
+        return SongSerializer(songs, many=True, context=self.context).data
 
 
 class ArtistWorksSerializer(serializers.ModelSerializer):
@@ -149,7 +196,16 @@ class ArtistWorksSerializer(serializers.ModelSerializer):
 
     def get_singles(self, obj):
         singles = obj.songs.filter(album__isnull=True).select_related("artist", "album")
+        if not _viewer_can_see_early_access(self.context):
+            singles = singles.filter(is_early_access=False)
         return SongSerializer(singles, many=True, context=self.context).data
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if not _viewer_can_see_stats(self.context):
+            data["total_listeners"] = None
+            data["total_streams"] = None
+        return data
 
 
 class PlaylistSerializer(serializers.ModelSerializer):

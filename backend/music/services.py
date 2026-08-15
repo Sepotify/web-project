@@ -3,6 +3,7 @@ from django.db.models.functions import Coalesce
 
 from accounts.models import ArtistStatus
 from music.models import Album, Playlist, Song
+from subscriptions.services import can_early_access
 
 CATALOG_SORT_CHOICES = (
     "newest",
@@ -43,23 +44,46 @@ HOME_PLAYLIST_LIMIT = 6
 HOME_SONG_LIMIT = 6
 
 
+def visible_songs_for_user(queryset: QuerySet, user) -> QuerySet:
+    """Hide early-access tracks unless the viewer has gold early-access."""
+    if user is None or not getattr(user, "is_authenticated", False) or not can_early_access(user):
+        return queryset.filter(is_early_access=False)
+    return queryset
+
+
+def _published_songs():
+    return (
+        Song.objects.filter(artist__status=ArtistStatus.APPROVED)
+        .select_related("artist", "album")
+        .prefetch_related("featured_artists")
+    )
+
+
 def get_home_feed(user):
     albums = apply_catalog_sort(
         Album.objects.filter(artist__status=ArtistStatus.APPROVED).select_related("artist"),
         "newest",
     )[:HOME_ALBUM_LIMIT]
 
-    songs = apply_catalog_sort(
-        Song.objects.filter(artist__status=ArtistStatus.APPROVED)
-        .select_related("artist", "album")
-        .prefetch_related("featured_artists"),
+    popular = apply_catalog_sort(
+        visible_songs_for_user(_published_songs().filter(is_early_access=False), user),
         "most_listeners",
     )[:HOME_SONG_LIMIT]
 
     playlists = Playlist.objects.filter(user=user).order_by("-updated_at")[:HOME_PLAYLIST_LIMIT]
 
+    early_access = []
+    if can_early_access(user):
+        early_access = list(
+            apply_catalog_sort(
+                _published_songs().filter(is_early_access=True),
+                "newest",
+            )[:HOME_SONG_LIMIT]
+        )
+
     return {
         "recent_playlists": list(playlists),
         "latest_albums": list(albums),
-        "popular_songs": list(songs),
+        "popular_songs": list(popular),
+        "early_access_songs": early_access,
     }

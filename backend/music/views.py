@@ -17,7 +17,12 @@ from music.serializers import (
     SongSerializer,
     SongWriteSerializer,
 )
-from music.services import apply_catalog_search, apply_catalog_sort, get_home_feed
+from music.services import (
+    apply_catalog_search,
+    apply_catalog_sort,
+    get_home_feed,
+    visible_songs_for_user,
+)
 
 
 def _artist_profile(request):
@@ -33,7 +38,11 @@ class ArtistAlbumListCreateView(APIView):
     def get(self, request):
         albums = Album.objects.filter(artist=_artist_profile(request)).select_related("artist")
         return Response(
-            AlbumSerializer(albums, many=True, context={"request": request}).data
+            AlbumSerializer(
+                albums,
+                many=True,
+                context={"request": request, "reveal_restricted": True},
+            ).data
         )
 
     def post(self, request):
@@ -44,7 +53,10 @@ class ArtistAlbumListCreateView(APIView):
         serializer.is_valid(raise_exception=True)
         album = serializer.save()
         return Response(
-            AlbumSerializer(album, context={"request": request}).data,
+            AlbumSerializer(
+                album,
+                context={"request": request, "reveal_restricted": True},
+            ).data,
             status=status.HTTP_201_CREATED,
         )
 
@@ -60,7 +72,12 @@ class ArtistAlbumDetailView(APIView):
 
     def get(self, request, pk):
         album = self.get_object(request, pk)
-        return Response(AlbumSerializer(album, context={"request": request}).data)
+        return Response(
+            AlbumSerializer(
+                album,
+                context={"request": request, "reveal_restricted": True},
+            ).data
+        )
 
     def patch(self, request, pk):
         album = self.get_object(request, pk)
@@ -72,7 +89,12 @@ class ArtistAlbumDetailView(APIView):
         )
         serializer.is_valid(raise_exception=True)
         album = serializer.save()
-        return Response(AlbumSerializer(album, context={"request": request}).data)
+        return Response(
+            AlbumSerializer(
+                album,
+                context={"request": request, "reveal_restricted": True},
+            ).data
+        )
 
     def delete(self, request, pk):
         album = self.get_object(request, pk)
@@ -93,7 +115,11 @@ class ArtistSongListCreateView(APIView):
             .prefetch_related("featured_artists")
         )
         return Response(
-            SongSerializer(songs, many=True, context={"request": request}).data
+            SongSerializer(
+                songs,
+                many=True,
+                context={"request": request, "reveal_restricted": True},
+            ).data
         )
 
     def post(self, request):
@@ -104,7 +130,10 @@ class ArtistSongListCreateView(APIView):
         serializer.is_valid(raise_exception=True)
         song = serializer.save()
         return Response(
-            SongSerializer(song, context={"request": request}).data,
+            SongSerializer(
+                song,
+                context={"request": request, "reveal_restricted": True},
+            ).data,
             status=status.HTTP_201_CREATED,
         )
 
@@ -120,7 +149,12 @@ class ArtistSongDetailView(APIView):
 
     def get(self, request, pk):
         song = self.get_object(request, pk)
-        return Response(SongSerializer(song, context={"request": request}).data)
+        return Response(
+            SongSerializer(
+                song,
+                context={"request": request, "reveal_restricted": True},
+            ).data
+        )
 
     def patch(self, request, pk):
         song = self.get_object(request, pk)
@@ -132,7 +166,12 @@ class ArtistSongDetailView(APIView):
         )
         serializer.is_valid(raise_exception=True)
         song = serializer.save()
-        return Response(SongSerializer(song, context={"request": request}).data)
+        return Response(
+            SongSerializer(
+                song,
+                context={"request": request, "reveal_restricted": True},
+            ).data
+        )
 
     def delete(self, request, pk):
         song = self.get_object(request, pk)
@@ -164,6 +203,7 @@ class SongCatalogView(generics.ListAPIView):
         )
         if self.request.query_params.get("singles_only") in {"1", "true", "yes"}:
             queryset = queryset.filter(album__isnull=True)
+        queryset = visible_songs_for_user(queryset, self.request.user)
         queryset = apply_catalog_search(queryset, self.request.query_params.get("q", ""))
         return apply_catalog_sort(queryset, self.request.query_params.get("sort", ""))
 
@@ -186,9 +226,12 @@ class SongDetailView(generics.RetrieveAPIView):
 
     def get_queryset(self):
         return (
-            Song.objects.filter(artist__status=ArtistStatus.APPROVED)
-            .select_related("artist", "album")
-            .prefetch_related("featured_artists")
+            visible_songs_for_user(
+                Song.objects.filter(artist__status=ArtistStatus.APPROVED)
+                .select_related("artist", "album")
+                .prefetch_related("featured_artists"),
+                self.request.user,
+            )
         )
 
 
@@ -226,6 +269,9 @@ class HomeFeedView(APIView):
                 ).data,
                 "popular_songs": SongSerializer(
                     feed["popular_songs"], many=True, context=context
+                ).data,
+                "early_access_songs": SongSerializer(
+                    feed["early_access_songs"], many=True, context=context
                 ).data,
             }
         )

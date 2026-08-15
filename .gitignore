@@ -7,3 +7,5 @@ backend/**/*.pyc
 __pycache__/
 *.pyc
 .DS_Store
+
+backend/.gitignore
