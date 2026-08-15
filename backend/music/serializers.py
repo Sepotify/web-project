@@ -110,6 +110,48 @@ class SongSerializer(serializers.ModelSerializer):
         return _absolute_media_url(self.context.get("request"), obj.audio)
 
 
+class AlbumDetailSerializer(AlbumSerializer):
+    songs = SongSerializer(many=True, read_only=True)
+
+    class Meta(AlbumSerializer.Meta):
+        fields = list(AlbumSerializer.Meta.fields) + ["songs"]
+
+
+class ArtistWorksSerializer(serializers.ModelSerializer):
+    user_id = serializers.IntegerField(source="user.id", read_only=True)
+    follower_count = serializers.SerializerMethodField()
+    albums = serializers.SerializerMethodField()
+    singles = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ArtistProfile
+        fields = [
+            "id",
+            "user_id",
+            "stage_name",
+            "bio",
+            "is_verified",
+            "status",
+            "total_listeners",
+            "total_streams",
+            "follower_count",
+            "albums",
+            "singles",
+        ]
+        read_only_fields = fields
+
+    def get_follower_count(self, obj):
+        return obj.followers.count()
+
+    def get_albums(self, obj):
+        albums = obj.albums.select_related("artist").all()
+        return AlbumSerializer(albums, many=True, context=self.context).data
+
+    def get_singles(self, obj):
+        singles = obj.songs.filter(album__isnull=True).select_related("artist", "album")
+        return SongSerializer(singles, many=True, context=self.context).data
+
+
 class AlbumWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Album

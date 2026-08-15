@@ -5,11 +5,14 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from accounts.models import ArtistProfile, ArtistStatus
 from accounts.permissions import IsApprovedArtist
 from music.models import Album, Song
 from music.serializers import (
+    AlbumDetailSerializer,
     AlbumSerializer,
     AlbumWriteSerializer,
+    ArtistWorksSerializer,
     SongSerializer,
     SongWriteSerializer,
 )
@@ -162,3 +165,43 @@ class SongCatalogView(generics.ListAPIView):
             queryset = queryset.filter(album__isnull=True)
         queryset = apply_catalog_search(queryset, self.request.query_params.get("q", ""))
         return apply_catalog_sort(queryset, self.request.query_params.get("sort", ""))
+
+
+class AlbumDetailView(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = AlbumDetailSerializer
+
+    def get_queryset(self):
+        return (
+            Album.objects.filter(artist__status=ArtistStatus.APPROVED)
+            .select_related("artist")
+            .prefetch_related("songs__artist", "songs__album", "songs__featured_artists")
+        )
+
+
+class SongDetailView(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = SongSerializer
+
+    def get_queryset(self):
+        return (
+            Song.objects.filter(artist__status=ArtistStatus.APPROVED)
+            .select_related("artist", "album")
+            .prefetch_related("featured_artists")
+        )
+
+
+class ArtistWorksView(APIView):
+    """Public artist profile discography: bio, verified badge, albums, and singles."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk):
+        artist = get_object_or_404(
+            ArtistProfile.objects.select_related("user"),
+            pk=pk,
+            status=ArtistStatus.APPROVED,
+        )
+        return Response(
+            ArtistWorksSerializer(artist, context={"request": request}).data
+        )

@@ -2,16 +2,22 @@ from django.urls import path
 
 from music.views import (
     AlbumCatalogView,
+    AlbumDetailView,
     ArtistAlbumDetailView,
     ArtistAlbumListCreateView,
     ArtistSongDetailView,
     ArtistSongListCreateView,
+    ArtistWorksView,
     SongCatalogView,
+    SongDetailView,
 )
 
 urlpatterns = [
     path("albums/", AlbumCatalogView.as_view(), name="albums-catalog"),
+    path("albums/<int:pk>/", AlbumDetailView.as_view(), name="albums-detail"),
     path("songs/", SongCatalogView.as_view(), name="songs-catalog"),
+    path("songs/<int:pk>/", SongDetailView.as_view(), name="songs-detail"),
+    path("artists/<int:pk>/works/", ArtistWorksView.as_view(), name="artists-works"),
     path("me/albums/", ArtistAlbumListCreateView.as_view(), name="me-albums"),
     path("me/albums/<int:pk>/", ArtistAlbumDetailView.as_view(), name="me-albums-detail"),
     path("me/songs/", ArtistSongListCreateView.as_view(), name="me-songs"),
