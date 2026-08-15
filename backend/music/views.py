@@ -1,6 +1,7 @@
 from django.shortcuts import get_object_or_404
-from rest_framework import status
+from rest_framework import generics, status
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -12,6 +13,7 @@ from music.serializers import (
     SongSerializer,
     SongWriteSerializer,
 )
+from music.services import apply_catalog_search, apply_catalog_sort
 
 
 def _artist_profile(request):
@@ -132,3 +134,31 @@ class ArtistSongDetailView(APIView):
         song = self.get_object(request, pk)
         song.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class AlbumCatalogView(generics.ListAPIView):
+    """Search and sort published albums by title or artist name."""
+
+    permission_classes = [IsAuthenticated]
+    serializer_class = AlbumSerializer
+
+    def get_queryset(self):
+        queryset = Album.objects.select_related("artist")
+        queryset = apply_catalog_search(queryset, self.request.query_params.get("q", ""))
+        return apply_catalog_sort(queryset, self.request.query_params.get("sort", ""))
+
+
+class SongCatalogView(generics.ListAPIView):
+    """Search and sort published songs by title or artist name."""
+
+    permission_classes = [IsAuthenticated]
+    serializer_class = SongSerializer
+
+    def get_queryset(self):
+        queryset = Song.objects.select_related("artist", "album").prefetch_related(
+            "featured_artists"
+        )
+        if self.request.query_params.get("singles_only") in {"1", "true", "yes"}:
+            queryset = queryset.filter(album__isnull=True)
+        queryset = apply_catalog_search(queryset, self.request.query_params.get("q", ""))
+        return apply_catalog_sort(queryset, self.request.query_params.get("sort", ""))
