@@ -5,8 +5,13 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from accounts.permissions import IsApprovedArtist
-from music.models import Album
-from music.serializers import AlbumSerializer, AlbumWriteSerializer
+from music.models import Album, Song
+from music.serializers import (
+    AlbumSerializer,
+    AlbumWriteSerializer,
+    SongSerializer,
+    SongWriteSerializer,
+)
 
 
 def _artist_profile(request):
@@ -66,4 +71,64 @@ class ArtistAlbumDetailView(APIView):
     def delete(self, request, pk):
         album = self.get_object(request, pk)
         album.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ArtistSongListCreateView(APIView):
+    """List and upload songs owned by the approved artist."""
+
+    permission_classes = [IsApprovedArtist]
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
+
+    def get(self, request):
+        songs = (
+            Song.objects.filter(artist=_artist_profile(request))
+            .select_related("artist", "album")
+            .prefetch_related("featured_artists")
+        )
+        return Response(
+            SongSerializer(songs, many=True, context={"request": request}).data
+        )
+
+    def post(self, request):
+        serializer = SongWriteSerializer(
+            data=request.data,
+            context={"request": request, "artist": _artist_profile(request)},
+        )
+        serializer.is_valid(raise_exception=True)
+        song = serializer.save()
+        return Response(
+            SongSerializer(song, context={"request": request}).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class ArtistSongDetailView(APIView):
+    """Retrieve, update, or delete a song owned by the approved artist."""
+
+    permission_classes = [IsApprovedArtist]
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
+
+    def get_object(self, request, pk):
+        return get_object_or_404(Song, pk=pk, artist=_artist_profile(request))
+
+    def get(self, request, pk):
+        song = self.get_object(request, pk)
+        return Response(SongSerializer(song, context={"request": request}).data)
+
+    def patch(self, request, pk):
+        song = self.get_object(request, pk)
+        serializer = SongWriteSerializer(
+            song,
+            data=request.data,
+            partial=True,
+            context={"request": request, "artist": _artist_profile(request)},
+        )
+        serializer.is_valid(raise_exception=True)
+        song = serializer.save()
+        return Response(SongSerializer(song, context={"request": request}).data)
+
+    def delete(self, request, pk):
+        song = self.get_object(request, pk)
+        song.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
