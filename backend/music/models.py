@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.db import models
 
+from music.validators import validate_audio_file, validate_cover_file
+
 
 class Album(models.Model):
     title = models.CharField(max_length=200)
@@ -9,7 +11,12 @@ class Album(models.Model):
         on_delete=models.CASCADE,
         related_name="albums",
     )
-    cover = models.ImageField(upload_to="covers/", blank=True, null=True)
+    cover = models.ImageField(
+        upload_to="covers/",
+        blank=True,
+        null=True,
+        validators=[validate_cover_file],
+    )
     genre = models.CharField(max_length=80, blank=True, default="")
     release_year = models.PositiveIntegerField(blank=True, null=True)
     listener_count = models.PositiveIntegerField(default=0)
@@ -38,8 +45,13 @@ class Song(models.Model):
         blank=True,
         null=True,
     )
-    audio = models.FileField(upload_to="audio/")
-    cover = models.ImageField(upload_to="covers/", blank=True, null=True)
+    audio = models.FileField(upload_to="audio/", validators=[validate_audio_file])
+    cover = models.ImageField(
+        upload_to="covers/",
+        blank=True,
+        null=True,
+        validators=[validate_cover_file],
+    )
     lyrics = models.TextField(blank=True, default="")
     genre = models.CharField(max_length=80, blank=True, default="")
     release_year = models.PositiveIntegerField(blank=True, null=True)

@@ -8,6 +8,10 @@ __pycache__/
 venv/
 media/avatars/*
 !media/avatars/.gitkeep
+media/audio/*
+!media/audio/.gitkeep
+media/covers/*
+!media/covers/.gitkeep
 staticfiles/
 .pytest_cache/
 .mypy_cache/
