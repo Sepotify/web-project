@@ -2,6 +2,7 @@ from pathlib import Path
 
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import generics, status
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
@@ -56,6 +57,11 @@ class ArtistAlbumListCreateView(APIView):
             ).data
         )
 
+    @extend_schema(
+        request=AlbumWriteSerializer,
+        responses={201: AlbumSerializer},
+        description="Create an album. Send cover as multipart/form-data (JPG/PNG/WebP, max 2 MB).",
+    )
     def post(self, request):
         serializer = AlbumWriteSerializer(
             data=request.data,
@@ -133,6 +139,16 @@ class ArtistSongListCreateView(APIView):
             ).data
         )
 
+    @extend_schema(
+        request=SongWriteSerializer,
+        responses={201: SongSerializer},
+        description=(
+            "Upload a song as multipart/form-data. "
+            "audio is required (MP3/WAV/FLAC, max 8 MB). "
+            "Optional: cover, lyrics, genre, release_year, album, "
+            "featured_artist_ids, duration_seconds, is_early_access."
+        ),
+    )
     def post(self, request):
         serializer = SongWriteSerializer(
             data=request.data,
@@ -190,6 +206,15 @@ class ArtistSongDetailView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+@extend_schema(
+    parameters=[
+        OpenApiParameter(name="q", description="Search title or artist name"),
+        OpenApiParameter(
+            name="sort",
+            description="newest | oldest | most_listeners | most_streams | title_asc",
+        ),
+    ]
+)
 class AlbumCatalogView(generics.ListAPIView):
     """Search and sort published albums by title or artist name."""
 
@@ -202,6 +227,16 @@ class AlbumCatalogView(generics.ListAPIView):
         return apply_catalog_sort(queryset, self.request.query_params.get("sort", ""))
 
 
+@extend_schema(
+    parameters=[
+        OpenApiParameter(name="q", description="Search title or artist name"),
+        OpenApiParameter(
+            name="sort",
+            description="newest | oldest | most_listeners | most_streams | title_asc",
+        ),
+        OpenApiParameter(name="singles_only", description="true to hide album tracks"),
+    ]
+)
 class SongCatalogView(generics.ListAPIView):
     """Search and sort published songs by title or artist name."""
 
