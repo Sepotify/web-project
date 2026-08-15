@@ -4,9 +4,12 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from django.utils import timezone
+
 from accounts.models import ArtistProfile, ArtistStatus, User, UserRole, UserSettings
 from music.models import Song
 from subscriptions.models import PricingConfig, Subscription, SubscriptionTier
+from subscriptions.services import set_user_tier
 
 
 class Person2PublishTests(APITestCase):
@@ -115,3 +118,97 @@ class Person2PublishTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST, response.data)
         self.assertIn("audio", response.data)
         self.assertEqual(Song.objects.count(), 0)
+
+
+class Person2LimitTests(APITestCase):
+    def setUp(self):
+        PricingConfig.get_solo()
+
+    def _auth(self, user):
+        refresh = RefreshToken.for_user(user)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
+
+    def _make_listener(self, *, email, username, tier=SubscriptionTier.BASIC):
+        user = User.objects.create_user(
+            email=email,
+            password="secret1",
+            username=username,
+            display_name=username,
+            role=UserRole.LISTENER,
+        )
+        UserSettings.objects.create(user=user)
+        Subscription.objects.create(user=user, tier=tier)
+        return user
+
+    def _make_song(self):
+        artist_user = User.objects.create_user(
+            email="artist@example.com",
+            password="secret1",
+            username="approved_artist",
+            display_name="Approved Artist",
+            role=UserRole.ARTIST,
+        )
+        UserSettings.objects.create(user=artist_user)
+        Subscription.objects.create(user=artist_user, tier=SubscriptionTier.BASIC)
+        artist = ArtistProfile.objects.create(
+            user=artist_user,
+            stage_name="Approved Artist",
+            portfolio="portfolio sample works here",
+            status=ArtistStatus.APPROVED,
+            is_verified=True,
+        )
+        return Song.objects.create(
+            title="Playable Track",
+            artist=artist,
+            audio=SimpleUploadedFile("play.mp3", b"ID3fake-audio", content_type="audio/mpeg"),
+            duration_seconds=180,
+        )
+
+    def test_basic_playlist_limit(self):
+        """Basic users cannot create more than 6 playlists."""
+        user = self._make_listener(email="basic@example.com", username="basic_listener")
+        self._auth(user)
+
+        for index in range(6):
+            created = self.client.post(
+                reverse("playlists"),
+                {"name": f"Mix {index}"},
+                format="json",
+            )
+            self.assertEqual(created.status_code, status.HTTP_201_CREATED, created.data)
+
+        blocked = self.client.post(
+            reverse("playlists"),
+            {"name": "One too many"},
+            format="json",
+        )
+        self.assertEqual(blocked.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertIn("6-playlist limit", blocked.data["detail"])
+
+        set_user_tier(user, SubscriptionTier.GOLD)
+        allowed = self.client.post(
+            reverse("playlists"),
+            {"name": "Gold extra"},
+            format="json",
+        )
+        self.assertEqual(allowed.status_code, status.HTTP_201_CREATED, allowed.data)
+
+    def test_basic_daily_stream_limit(self):
+        """Basic users are stopped after 60 streams in a day."""
+        user = self._make_listener(email="streamer@example.com", username="streamer")
+        song = self._make_song()
+        self._auth(user)
+
+        first = self.client.post(reverse("songs-stream", kwargs={"pk": song.pk}))
+        self.assertEqual(first.status_code, status.HTTP_200_OK, first.data)
+        self.assertEqual(first.data["daily_stream_count"], 1)
+
+        user.daily_stream_count = 60
+        user.daily_stream_reset_date = timezone.localdate()
+        user.save(update_fields=["daily_stream_count", "daily_stream_reset_date"])
+
+        blocked = self.client.post(reverse("songs-stream", kwargs={"pk": song.pk}))
+        self.assertEqual(blocked.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertIn("Daily stream limit of 60", blocked.data["detail"])
+        song.refresh_from_db()
+        self.assertEqual(song.stream_count, 1)
