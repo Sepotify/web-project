@@ -1,3 +1,6 @@
+from pathlib import Path
+
+from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
@@ -6,7 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from accounts.models import ArtistProfile, ArtistStatus
-from accounts.permissions import IsApprovedArtist
+from accounts.permissions import HasSubscriptionCapability, IsApprovedArtist
 from music.models import Album, Playlist, Song
 from music.serializers import (
     AlbumDetailSerializer,
@@ -30,7 +33,7 @@ from music.services import (
     remove_song_from_playlist,
     visible_songs_for_user,
 )
-from subscriptions.services import can_stream_now
+from subscriptions.services import can_early_access, can_stream_now
 
 
 def _artist_profile(request):
@@ -270,6 +273,33 @@ class SongStreamView(APIView):
                 "song": SongSerializer(song, context={"request": request}).data,
             }
         )
+
+
+class SongDownloadView(APIView):
+    """Download a track. Silver and gold only (Person 1 can_download)."""
+
+    permission_classes = [IsAuthenticated, HasSubscriptionCapability]
+    required_capability = "can_download"
+
+    def get(self, request, pk):
+        song = get_object_or_404(
+            Song.objects.select_related("artist"),
+            pk=pk,
+            artist__status=ArtistStatus.APPROVED,
+        )
+        if song.is_early_access and not can_early_access(request.user):
+            return Response(
+                {"detail": "This early-access track is only available on the gold plan."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        if not song.audio:
+            return Response(
+                {"detail": "Audio file is not available."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        filename = Path(song.audio.name).name
+        return FileResponse(song.audio.open("rb"), as_attachment=True, filename=filename)
 
 
 class ArtistWorksView(APIView):
