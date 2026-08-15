@@ -14,6 +14,7 @@ from music.views import (
     PlaylistSongView,
     SongCatalogView,
     SongDetailView,
+    SongStreamView,
 )
 
 urlpatterns = [
@@ -22,6 +23,7 @@ urlpatterns = [
     path("albums/<int:pk>/", AlbumDetailView.as_view(), name="albums-detail"),
     path("songs/", SongCatalogView.as_view(), name="songs-catalog"),
     path("songs/<int:pk>/", SongDetailView.as_view(), name="songs-detail"),
+    path("songs/<int:pk>/stream/", SongStreamView.as_view(), name="songs-stream"),
     path("artists/<int:pk>/works/", ArtistWorksView.as_view(), name="artists-works"),
     path("playlists/", PlaylistListCreateView.as_view(), name="playlists"),
     path("playlists/<int:pk>/", PlaylistDetailView.as_view(), name="playlists-detail"),

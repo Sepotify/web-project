@@ -26,9 +26,11 @@ from music.services import (
     apply_catalog_sort,
     can_create_user_playlist,
     get_home_feed,
+    record_stream,
     remove_song_from_playlist,
     visible_songs_for_user,
 )
+from subscriptions.services import can_stream_now
 
 
 def _artist_profile(request):
@@ -238,6 +240,35 @@ class SongDetailView(generics.RetrieveAPIView):
                 .prefetch_related("featured_artists"),
                 self.request.user,
             )
+        )
+
+
+class SongStreamView(APIView):
+    """Register a play and enforce the daily stream cap from Person 1."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        allowed, message = can_stream_now(request.user)
+        if not allowed:
+            return Response({"detail": message}, status=status.HTTP_403_FORBIDDEN)
+
+        song = get_object_or_404(
+            Song.objects.select_related("artist", "album"),
+            pk=pk,
+            artist__status=ArtistStatus.APPROVED,
+        )
+        event, error = record_stream(request.user, song)
+        if error:
+            return Response({"detail": error}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(
+            {
+                "detail": "Stream recorded.",
+                "stream_event_id": event.pk,
+                "daily_stream_count": request.user.daily_stream_count,
+                "song": SongSerializer(song, context={"request": request}).data,
+            }
         )
 
 
