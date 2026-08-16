@@ -78,6 +78,7 @@ export function unfollowUser(followerId: string, targetUserId: string): boolean 
 export interface UpdateProfileInput {
   displayName: string;
   avatarUrl?: string | null;
+  avatarFile?: File | null;
 }
 
 export interface UpdateProfileErrors {
@@ -112,18 +113,34 @@ export function validateUpdateProfileInput(
   return errors;
 }
 
-export function updateProfile(
+export async function updateProfile(
   userId: string,
   input: UpdateProfileInput,
-): UpdateProfileResult {
+): Promise<UpdateProfileResult> {
   const user = getUserById(userId);
-  if (!user) {
-    return { success: false, error: "User not found." };
+  if (user) {
+    const errors = validateUpdateProfileInput(input, user.subscription);
+    if (Object.keys(errors).length > 0) {
+      return { success: false, errors };
+    }
   }
 
-  const errors = validateUpdateProfileInput(input, user.subscription);
-  if (Object.keys(errors).length > 0) {
-    return { success: false, errors };
+  try {
+    const { apiUpdateMe, mapApiUserToUser } = await import("@/lib/api/endpoints");
+    let data;
+    if (input.avatarFile) {
+      const formData = new FormData();
+      formData.append("display_name", input.displayName.trim());
+      formData.append("avatar", input.avatarFile);
+      data = await apiUpdateMe(formData);
+    } else {
+      data = await apiUpdateMe({ display_name: input.displayName.trim() });
+    }
+    return { success: true, user: mapApiUserToUser(data) };
+  } catch {
+    if (!user) {
+      return { success: false, error: "Could not update profile." };
+    }
   }
 
   const patch: Partial<User> = {
@@ -143,9 +160,9 @@ export function updateProfile(
 }
 
 export function getFollowingCount(user: User): number {
-  return user.followingUserIds.length;
+  return user.followingCount ?? user.followingUserIds.length;
 }
 
 export function getFollowerCount(user: User): number {
-  return user.followerIds.length;
+  return user.followerCount ?? user.followerIds.length;
 }

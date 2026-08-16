@@ -20,6 +20,8 @@ export interface User {
   followerIds: string[];
   followingUserIds: string[];
   followingArtistIds: string[];
+  followerCount?: number;
+  followingCount?: number;
   dailyStreamCount: number;
   notificationPreferences?: Partial<Record<NotificationType, boolean>>;
   artistStatus?: ArtistStatus;

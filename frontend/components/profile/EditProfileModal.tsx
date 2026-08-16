@@ -32,6 +32,7 @@ export function EditProfileModal({
 
   const [displayName, setDisplayName] = useState(user.displayName);
   const [avatarPreview, setAvatarPreview] = useState<string | undefined>(user.avatarUrl);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarChanged, setAvatarChanged] = useState(false);
   const [errors, setErrors] = useState<UpdateProfileErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,6 +41,7 @@ export function EditProfileModal({
     if (!isOpen) return;
     setDisplayName(user.displayName);
     setAvatarPreview(user.avatarUrl);
+    setAvatarFile(null);
     setAvatarChanged(false);
     setErrors({});
   }, [isOpen, user]);
@@ -61,18 +63,20 @@ export function EditProfileModal({
     const reader = new FileReader();
     reader.onload = () => {
       setAvatarPreview(reader.result as string);
+      setAvatarFile(file);
       setAvatarChanged(true);
       setErrors((prev) => ({ ...prev, avatarUrl: undefined }));
     };
     reader.readAsDataURL(file);
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     const input = {
       displayName,
       avatarUrl: avatarChanged ? avatarPreview ?? null : undefined,
+      avatarFile: avatarChanged ? avatarFile : undefined,
     };
 
     const validationErrors = validateUpdateProfileInput(input, user.subscription);
@@ -82,7 +86,7 @@ export function EditProfileModal({
     }
 
     setIsSubmitting(true);
-    const result = updateProfile(user.id, input);
+    const result = await updateProfile(user.id, input);
     setIsSubmitting(false);
 
     if (!result.success || !result.user) {

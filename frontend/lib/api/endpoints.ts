@@ -118,6 +118,8 @@ export function mapApiUserToUser(apiUser: ApiUser): User {
     followingUserIds: [],
     followingArtistIds: [],
     dailyStreamCount: apiUser.daily_stream_count ?? 0,
+    followerCount: apiUser.follower_count ?? 0,
+    followingCount: apiUser.following_count ?? 0,
     createdAt: apiUser.date_joined ?? new Date().toISOString(),
     artistStatus: apiUser.artist_profile?.status,
     artistProfileId: apiUser.artist_profile
@@ -157,6 +159,19 @@ export async function apiLogout(): Promise<void> {
 
 export async function apiFetchMe(): Promise<ApiUser> {
   return apiRequest<ApiUser>("/users/me/");
+}
+
+export async function apiFetchUser(id: string): Promise<ApiUser> {
+  return apiRequest<ApiUser>(`/users/${id}/`);
+}
+
+export async function apiUpdateMe(
+  body: { display_name?: string } | FormData,
+): Promise<ApiUser> {
+  return apiRequest<ApiUser>("/users/me/", {
+    method: "PATCH",
+    body,
+  });
 }
 
 export async function apiFetchNotifications(): Promise<ApiNotificationList> {

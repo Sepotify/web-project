@@ -4,13 +4,11 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
 import { ProfileView } from "@/components/profile/ProfileView";
-import { useProfile } from "@/hooks/useProfile";
 import { useAuth } from "@/store/AuthContext";
 
 export default function OwnProfilePage() {
   const router = useRouter();
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
-  const { profile, isLoading, refresh } = useProfile(user?.id);
+  const { user, isAuthenticated, isLoading: authLoading, refreshUser } = useAuth();
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -18,7 +16,17 @@ export default function OwnProfilePage() {
     }
   }, [authLoading, isAuthenticated, router]);
 
-  if (authLoading || isLoading || !profile) {
+  if (authLoading) {
+    return (
+      <AppShell>
+        <div className="flex min-h-[40vh] items-center justify-center">
+          <p className="text-text-secondary">Loading profile...</p>
+        </div>
+      </AppShell>
+    );
+  }
+
+  if (!user) {
     return (
       <AppShell>
         <div className="flex min-h-[40vh] items-center justify-center">
@@ -30,10 +38,7 @@ export default function OwnProfilePage() {
 
   return (
     <AppShell>
-      <ProfileView
-        profile={profile}
-        onProfileUpdated={() => refresh()}
-      />
+      <ProfileView profile={user} onProfileUpdated={() => void refreshUser()} />
     </AppShell>
   );
 }
