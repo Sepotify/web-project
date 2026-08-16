@@ -1,0 +1,370 @@
+from rest_framework import serializers
+
+from accounts.models import ArtistProfile, ArtistStatus
+from music.models import Album, Playlist, Song
+from subscriptions.services import can_early_access, can_see_stats
+
+MIN_RELEASE_YEAR = 1900
+MAX_RELEASE_YEAR = 2100
+
+
+def _absolute_media_url(request, file_field):
+    if not file_field:
+        return None
+    if request:
+        return request.build_absolute_uri(file_field.url)
+    return file_field.url
+
+
+def _viewer(context):
+    request = context.get("request")
+    return getattr(request, "user", None)
+
+
+def _reveal_restricted(context) -> bool:
+    return bool(context.get("reveal_restricted"))
+
+
+def _viewer_can_see_stats(context) -> bool:
+    if _reveal_restricted(context):
+        return True
+    user = _viewer(context)
+    return bool(user and user.is_authenticated and can_see_stats(user))
+
+
+def _viewer_can_see_early_access(context) -> bool:
+    if _reveal_restricted(context):
+        return True
+    user = _viewer(context)
+    return bool(user and user.is_authenticated and can_early_access(user))
+
+
+def _validate_release_year(value):
+    if value is None:
+        return value
+    if value < MIN_RELEASE_YEAR or value > MAX_RELEASE_YEAR:
+        raise serializers.ValidationError(
+            f"Release year must be between {MIN_RELEASE_YEAR} and {MAX_RELEASE_YEAR}."
+        )
+    return value
+
+
+class AlbumSerializer(serializers.ModelSerializer):
+    artist_id = serializers.IntegerField(read_only=True)
+    artist_name = serializers.CharField(source="artist.stage_name", read_only=True)
+    artist_is_verified = serializers.BooleanField(source="artist.is_verified", read_only=True)
+    cover_url = serializers.SerializerMethodField()
+    song_ids = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Album
+        fields = [
+            "id",
+            "title",
+            "artist_id",
+            "artist_name",
+            "artist_is_verified",
+            "cover_url",
+            "genre",
+            "release_year",
+            "song_ids",
+            "listener_count",
+            "stream_count",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = fields
+
+    def get_cover_url(self, obj):
+        return _absolute_media_url(self.context.get("request"), obj.cover)
+
+    def get_song_ids(self, obj):
+        songs = obj.songs.order_by("id")
+        if not _viewer_can_see_early_access(self.context):
+            songs = songs.filter(is_early_access=False)
+        return list(songs.values_list("id", flat=True))
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if not _viewer_can_see_stats(self.context):
+            data["listener_count"] = None
+            data["stream_count"] = None
+        return data
+
+
+class SongSerializer(serializers.ModelSerializer):
+    artist_id = serializers.IntegerField(read_only=True)
+    artist_name = serializers.CharField(source="artist.stage_name", read_only=True)
+    artist_is_verified = serializers.BooleanField(source="artist.is_verified", read_only=True)
+    album_id = serializers.IntegerField(read_only=True, allow_null=True)
+    album_title = serializers.SerializerMethodField()
+    cover_url = serializers.SerializerMethodField()
+    audio_url = serializers.SerializerMethodField()
+    featured_artist_ids = serializers.PrimaryKeyRelatedField(
+        source="featured_artists",
+        many=True,
+        read_only=True,
+    )
+
+    class Meta:
+        model = Song
+        fields = [
+            "id",
+            "title",
+            "artist_id",
+            "artist_name",
+            "artist_is_verified",
+            "album_id",
+            "album_title",
+            "cover_url",
+            "audio_url",
+            "lyrics",
+            "genre",
+            "release_year",
+            "featured_artist_ids",
+            "duration_seconds",
+            "listener_count",
+            "stream_count",
+            "is_early_access",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = fields
+
+    def get_album_title(self, obj):
+        return obj.album.title if obj.album_id else None
+
+    def get_cover_url(self, obj):
+        cover = obj.cover or (obj.album.cover if obj.album_id and obj.album.cover else None)
+        return _absolute_media_url(self.context.get("request"), cover)
+
+    def get_audio_url(self, obj):
+        return _absolute_media_url(self.context.get("request"), obj.audio)
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if not _viewer_can_see_stats(self.context):
+            data["listener_count"] = None
+            data["stream_count"] = None
+        return data
+
+
+class AlbumDetailSerializer(AlbumSerializer):
+    songs = serializers.SerializerMethodField()
+
+    class Meta(AlbumSerializer.Meta):
+        fields = list(AlbumSerializer.Meta.fields) + ["songs"]
+
+    def get_songs(self, obj):
+        songs = obj.songs.select_related("artist", "album").prefetch_related(
+            "featured_artists"
+        )
+        if not _viewer_can_see_early_access(self.context):
+            songs = songs.filter(is_early_access=False)
+        return SongSerializer(songs, many=True, context=self.context).data
+
+
+class ArtistWorksSerializer(serializers.ModelSerializer):
+    user_id = serializers.IntegerField(source="user.id", read_only=True)
+    follower_count = serializers.SerializerMethodField()
+    albums = serializers.SerializerMethodField()
+    singles = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ArtistProfile
+        fields = [
+            "id",
+            "user_id",
+            "stage_name",
+            "bio",
+            "is_verified",
+            "status",
+            "total_listeners",
+            "total_streams",
+            "follower_count",
+            "albums",
+            "singles",
+        ]
+        read_only_fields = fields
+
+    def get_follower_count(self, obj):
+        return obj.followers.count()
+
+    def get_albums(self, obj):
+        albums = obj.albums.select_related("artist").all()
+        return AlbumSerializer(albums, many=True, context=self.context).data
+
+    def get_singles(self, obj):
+        singles = obj.songs.filter(album__isnull=True).select_related("artist", "album")
+        if not _viewer_can_see_early_access(self.context):
+            singles = singles.filter(is_early_access=False)
+        return SongSerializer(singles, many=True, context=self.context).data
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if not _viewer_can_see_stats(self.context):
+            data["total_listeners"] = None
+            data["total_streams"] = None
+        return data
+
+
+class PlaylistSerializer(serializers.ModelSerializer):
+    user_id = serializers.IntegerField(read_only=True)
+    song_ids = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Playlist
+        fields = ["id", "user_id", "name", "song_ids", "created_at", "updated_at"]
+        read_only_fields = fields
+
+    def get_song_ids(self, obj):
+        return list(
+            obj.playlist_songs.order_by("order", "id").values_list("song_id", flat=True)
+        )
+
+
+class PlaylistDetailSerializer(PlaylistSerializer):
+    songs = serializers.SerializerMethodField()
+
+    class Meta(PlaylistSerializer.Meta):
+        fields = list(PlaylistSerializer.Meta.fields) + ["songs"]
+
+    def get_songs(self, obj):
+        entries = obj.playlist_songs.select_related(
+            "song__artist",
+            "song__album",
+        ).prefetch_related("song__featured_artists")
+        songs = [entry.song for entry in entries]
+        return SongSerializer(songs, many=True, context=self.context).data
+
+
+class PlaylistWriteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Playlist
+        fields = ["name"]
+
+    def validate_name(self, value):
+        name = value.strip()
+        if not name:
+            raise serializers.ValidationError("Playlist name is required.")
+        if len(name) > 80:
+            raise serializers.ValidationError("Playlist name must be 80 characters or less.")
+
+        user = self.context["request"].user
+        qs = Playlist.objects.filter(user=user, name__iexact=name)
+        if self.instance is not None:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise serializers.ValidationError("You already have a playlist with this name.")
+        return name
+
+    def create(self, validated_data):
+        return Playlist.objects.create(user=self.context["request"].user, **validated_data)
+
+
+class PlaylistSongWriteSerializer(serializers.Serializer):
+    song_id = serializers.IntegerField()
+
+    def validate_song_id(self, value):
+        if not Song.objects.filter(pk=value, artist__status=ArtistStatus.APPROVED).exists():
+            raise serializers.ValidationError("Song not found.")
+        return value
+
+
+class AlbumWriteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Album
+        fields = ["title", "cover", "genre", "release_year"]
+
+    def validate_title(self, value):
+        title = value.strip()
+        if len(title) < 1:
+            raise serializers.ValidationError("Title is required.")
+        return title
+
+    def validate_genre(self, value):
+        return (value or "").strip()
+
+    def validate_release_year(self, value):
+        return _validate_release_year(value)
+
+    def create(self, validated_data):
+        artist = self.context["artist"]
+        return Album.objects.create(artist=artist, **validated_data)
+
+
+class SongWriteSerializer(serializers.ModelSerializer):
+    featured_artist_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+        required=False,
+        write_only=True,
+    )
+
+    class Meta:
+        model = Song
+        fields = [
+            "title",
+            "album",
+            "audio",
+            "cover",
+            "lyrics",
+            "genre",
+            "release_year",
+            "featured_artist_ids",
+            "duration_seconds",
+            "is_early_access",
+        ]
+
+    def validate_title(self, value):
+        title = value.strip()
+        if len(title) < 1:
+            raise serializers.ValidationError("Title is required.")
+        return title
+
+    def validate_genre(self, value):
+        return (value or "").strip()
+
+    def validate_lyrics(self, value):
+        return (value or "").strip()
+
+    def validate_release_year(self, value):
+        return _validate_release_year(value)
+
+    def validate_album(self, album):
+        artist = self.context.get("artist")
+        if album is not None and artist is not None and album.artist_id != artist.pk:
+            raise serializers.ValidationError("Album must belong to the same artist.")
+        return album
+
+    def validate_featured_artist_ids(self, value):
+        unique_ids = list(dict.fromkeys(value))
+        artist = self.context.get("artist")
+        if artist and artist.pk in unique_ids:
+            raise serializers.ValidationError("An artist cannot feature themselves.")
+
+        found = set(
+            ArtistProfile.objects.filter(
+                pk__in=unique_ids,
+                status=ArtistStatus.APPROVED,
+            ).values_list("pk", flat=True)
+        )
+        if found != set(unique_ids):
+            raise serializers.ValidationError(
+                "One or more featured artists are invalid or not approved."
+            )
+        return unique_ids
+
+    def create(self, validated_data):
+        featured_ids = validated_data.pop("featured_artist_ids", [])
+        artist = self.context["artist"]
+        song = Song.objects.create(artist=artist, **validated_data)
+        if featured_ids:
+            song.featured_artists.set(featured_ids)
+        return song
+
+    def update(self, instance, validated_data):
+        featured_ids = validated_data.pop("featured_artist_ids", None)
+        song = super().update(instance, validated_data)
+        if featured_ids is not None:
+            song.featured_artists.set(featured_ids)
+        return song

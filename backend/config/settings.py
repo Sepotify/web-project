@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "accounts.apps.AccountsConfig",
     "notifications.apps.NotificationsConfig",
     "subscriptions.apps.SubscriptionsConfig",
+    "music.apps.MusicConfig",
     "tickets.apps.TicketsConfig",
     "catalog.apps.CatalogConfig",
     "reports.apps.ReportsConfig",
@@ -131,9 +132,13 @@ SPECTACULAR_SETTINGS = {
     "TITLE": "Spotify Clone API",
     "DESCRIPTION": (
         "Phase 2 — Person 1: Auth, users, artists, settings, "
-        "notifications, and subscription access skeleton."
+        "notifications, and subscription access skeleton. "
+        "Person 2: albums, songs, playlists, catalog search, home feed, "
+        "streaming, and downloads. "
+        "Upload audio as multipart/form-data to POST /api/me/songs/ "
+        "(MP3/WAV/FLAC, max 8 MB). See music/README.md."
     ),
-    "VERSION": "1.0.0",
+    "VERSION": "1.1.0",
     "SERVE_INCLUDE_SCHEMA": False,
 }
 
