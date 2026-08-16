@@ -2,6 +2,7 @@ import type {
   ArtistStatus,
   NotificationType,
   SubscriptionTier,
+  TicketStatus,
   User,
   UserRole,
 } from "@/types";
@@ -68,6 +69,36 @@ export interface ApiPricing {
   silver_monthly: string | number;
   gold_monthly: string | number;
   updated_at: string;
+}
+
+export interface ApiTicketMessage {
+  id: number;
+  sender_id: number;
+  sender_role: UserRole;
+  sender_display_name: string;
+  content: string;
+  created_at: string;
+}
+
+export interface ApiTicketListItem {
+  id: number;
+  user_id: number;
+  user_display_name: string;
+  user_email: string;
+  subject: string;
+  status: TicketStatus;
+  message_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ApiTicketDetail extends ApiTicketListItem {
+  messages: ApiTicketMessage[];
+}
+
+export interface ApiTicketList {
+  count: number;
+  results: ApiTicketListItem[];
 }
 
 export function mapApiUserToUser(apiUser: ApiUser): User {
@@ -177,4 +208,42 @@ export async function apiCheckSubscriptionExpiry(): Promise<void> {
   // Expiry is enforced server-side via management command / signals.
   // Calling me/subscription keeps client session aware of current tier.
   await apiRequest("/users/me/subscription/");
+}
+
+export async function apiFetchTickets(): Promise<ApiTicketList> {
+  return apiRequest<ApiTicketList>("/tickets/");
+}
+
+export async function apiFetchTicket(id: string): Promise<ApiTicketDetail> {
+  return apiRequest<ApiTicketDetail>(`/tickets/${id}/`);
+}
+
+export async function apiCreateTicket(input: {
+  subject: string;
+  message: string;
+}): Promise<ApiTicketDetail> {
+  return apiRequest<ApiTicketDetail>("/tickets/", {
+    method: "POST",
+    body: input,
+  });
+}
+
+export async function apiReplyToTicket(
+  id: string,
+  content: string,
+): Promise<ApiTicketDetail> {
+  return apiRequest<ApiTicketDetail>(`/tickets/${id}/reply/`, {
+    method: "POST",
+    body: { content },
+  });
+}
+
+export async function apiUpdateTicketStatus(
+  id: string,
+  status: TicketStatus,
+): Promise<ApiTicketDetail> {
+  return apiRequest<ApiTicketDetail>(`/tickets/${id}/status/`, {
+    method: "PATCH",
+    body: { status },
+  });
 }
