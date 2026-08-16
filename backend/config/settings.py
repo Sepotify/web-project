@@ -153,9 +153,9 @@ SPECTACULAR_SETTINGS = {
 
 # Seed credentials (used by seed_users management command)
 ADMIN_EMAIL = env("ADMIN_EMAIL", default="admin@example.com")
-ADMIN_PASSWORD = env("ADMIN_PASSWORD", default="AdminPass123!")
+ADMIN_PASSWORD = env("ADMIN_PASSWORD", default="123456")
 SUPPORT_EMAIL = env("SUPPORT_EMAIL", default="support@example.com")
-SUPPORT_PASSWORD = env("SUPPORT_PASSWORD", default="SupportPass123!")
+SUPPORT_PASSWORD = env("SUPPORT_PASSWORD", default="123456")
 
 FRONTEND_ORIGIN = env("FRONTEND_ORIGIN", default="http://localhost:3000")
 PAYMENT_CALLBACK_URL = env(

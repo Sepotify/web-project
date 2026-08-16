@@ -75,4 +75,8 @@ describe("crossfade helpers", () => {
     expect(getEffectiveDuration(Number.NaN, 180)).toBe(180);
     expect(getEffectiveDuration(367, 30)).toBe(367);
   });
+
+  it("ignores a short Howler buffer so a later track can still crossfade", () => {
+    expect(getEffectiveDuration(5, 180)).toBe(180);
+  });
 });

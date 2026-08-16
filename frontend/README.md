@@ -58,14 +58,16 @@ NEXT_PUBLIC_API_URL=http://127.0.0.1:8000/api
 
 Open [http://localhost:3000](http://localhost:3000).
 
+The app is installable as a PWA (manifest + service worker). In Chrome, use Install / Add to Home Screen. Cached pages work offline; API, login, and audio still need the backend.
+
 Auth prefers the Django JWT API and falls back to localStorage demo users if the backend is down.
 
 ### Backend seed accounts
 
 | Role    | Email               | Password (default) |
 |---------|---------------------|--------------------|
-| Admin   | admin@example.com   | AdminPass123!      |
-| Support | support@example.com | SupportPass123!    |
+| Admin   | admin@example.com   | 123456             |
+| Support | support@example.com | 123456             |
 
 Register listeners/artists via the UI (or Swagger) against the API.
 

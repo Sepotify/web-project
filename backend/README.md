@@ -30,8 +30,8 @@ Swagger UI: http://127.0.0.1:8000/api/docs/
 
 | Role    | Email                 | Password (from `.env`) |
 |---------|-----------------------|------------------------|
-| admin   | admin@example.com     | AdminPass123!          |
-| support | support@example.com   | SupportPass123!        |
+| admin   | admin@example.com     | 123456                 |
+| support | support@example.com   | 123456                 |
 
 Only one admin is allowed system-wide.
 

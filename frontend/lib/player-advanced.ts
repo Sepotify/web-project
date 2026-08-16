@@ -38,9 +38,20 @@ export function getRemainingTime(currentTime: number, duration: number): number 
   return Math.max(0, duration - currentTime);
 }
 
+export function isUsableDuration(value: number): boolean {
+  return Number.isFinite(value) && value > 1;
+}
+
 export function getEffectiveDuration(howlDuration: number, songDuration: number): number {
-  if (Number.isFinite(howlDuration) && howlDuration > 1) return howlDuration;
-  if (Number.isFinite(songDuration) && songDuration > 0) return songDuration;
+  const howlOk = isUsableDuration(howlDuration);
+  const songOk = Number.isFinite(songDuration) && songDuration > 0;
+
+  // HTML5 Howl can report a short buffer length right after a swap/crossfade.
+  if (howlOk && songOk && howlDuration < songDuration * 0.75) {
+    return songDuration;
+  }
+  if (howlOk) return howlDuration;
+  if (songOk) return songDuration;
   return 0;
 }
 

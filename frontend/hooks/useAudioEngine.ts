@@ -11,6 +11,7 @@ import {
   CROSSFADE_SECONDS,
   crossfadeVolumeFactors,
   getRemainingTime,
+  isUsableDuration,
   type AudioQuality,
 } from "@/lib/player-advanced";
 import { useCallback, useEffect, useRef } from "react";
@@ -42,6 +43,8 @@ export function useAudioEngine({
   const finishingRef = useRef(false);
   const fadeWindowRef = useRef(CROSSFADE_SECONDS);
   const crossfadeStartedAtRef = useRef(0);
+  const pendingSourceUrlRef = useRef("");
+  const seekHoldRef = useRef<number | null>(null);
 
   const onTrackEndRef = useRef(onTrackEnd);
   const onProgressRef = useRef(onProgress);
@@ -58,6 +61,15 @@ export function useAudioEngine({
       cancelAnimationFrame(progressFrameRef.current);
       progressFrameRef.current = null;
     }
+  }, []);
+
+  const reportProgress = useCallback((howl: Howl, fallbackTime?: number) => {
+    const time =
+      typeof fallbackTime === "number" ? fallbackTime : (howl.seek() as number);
+    if (!Number.isFinite(time) || time < 0) return;
+
+    const duration = howl.duration();
+    onProgressRef.current(time, isUsableDuration(duration) ? duration : 0);
   }, []);
 
   const applyCrossfadeVolumes = useCallback(() => {
@@ -82,7 +94,7 @@ export function useAudioEngine({
   }, []);
 
   const finishCrossfade = useCallback(() => {
-    if (finishingRef.current) return;
+    if (finishingRef.current || !crossfadingRef.current) return;
     finishingRef.current = true;
 
     const outgoing = howlRef.current;
@@ -91,15 +103,21 @@ export function useAudioEngine({
     howlRef.current = incoming;
     incomingRef.current = null;
     crossfadingRef.current = false;
+    if (pendingSourceUrlRef.current) {
+      sourceUrlRef.current = pendingSourceUrlRef.current;
+      pendingSourceUrlRef.current = "";
+    }
 
     if (incoming) {
       incoming.volume(userVolumeRef.current);
-      onProgressRef.current(incoming.seek() as number, incoming.duration());
     }
 
     finishingRef.current = false;
     onCrossfadeCompleteRef.current();
-  }, [unloadHowl]);
+    if (incoming) {
+      reportProgress(incoming);
+    }
+  }, [reportProgress, unloadHowl]);
 
   const startProgressLoop = useCallback(() => {
     stopProgressLoop();
@@ -108,26 +126,38 @@ export function useAudioEngine({
       const howl = howlRef.current;
       const incoming = incomingRef.current;
       const playing = Boolean(howl?.playing() || incoming?.playing());
-      if (!playing) return;
 
-      if (crossfadingRef.current && incoming && howl) {
+      if (crossfadingRef.current) {
         applyCrossfadeVolumes();
         const elapsed = (performance.now() - crossfadeStartedAtRef.current) / 1000;
-        if (elapsed >= fadeWindowRef.current - 0.05 || !howl.playing()) {
+        if (elapsed >= fadeWindowRef.current - 0.05) {
           finishCrossfade();
         }
+        const active = howlRef.current;
+        if (active) {
+          if (seekHoldRef.current != null && !isUsableDuration(active.duration())) {
+            reportProgress(active, seekHoldRef.current);
+          } else {
+            reportProgress(active);
+          }
+        }
+        progressFrameRef.current = requestAnimationFrame(tick);
+        return;
       }
 
-      const active = howlRef.current;
-      if (active) {
-        onProgressRef.current(active.seek() as number, active.duration());
+      if (!howl || !playing) return;
+
+      if (seekHoldRef.current != null && !isUsableDuration(howl.duration())) {
+        reportProgress(howl, seekHoldRef.current);
+      } else {
+        reportProgress(howl);
       }
 
       progressFrameRef.current = requestAnimationFrame(tick);
     };
 
     progressFrameRef.current = requestAnimationFrame(tick);
-  }, [applyCrossfadeVolumes, finishCrossfade, stopProgressLoop]);
+  }, [applyCrossfadeVolumes, finishCrossfade, reportProgress, stopProgressLoop]);
 
   const handleHowlEnd = useCallback(
     (howl: Howl) => {
@@ -152,6 +182,7 @@ export function useAudioEngine({
       options: {
         autoplay: boolean;
         startAt?: number;
+        onReady?: (howl: Howl) => void;
       },
     ) => {
       let howl!: Howl;
@@ -163,10 +194,11 @@ export function useAudioEngine({
         onload: () => {
           if (typeof options.startAt === "number" && options.startAt > 0) {
             howl.seek(options.startAt);
+            seekHoldRef.current = null;
           }
-          onProgressRef.current(
-            typeof options.startAt === "number" ? options.startAt : 0,
-            howl.duration(),
+          reportProgress(
+            howl,
+            typeof options.startAt === "number" ? options.startAt : undefined,
           );
           if (options.autoplay && !howl.playing()) {
             howl.play();
@@ -174,6 +206,7 @@ export function useAudioEngine({
           if (qualityRef.current === "low") {
             void attachQualityGraph(howl, "low");
           }
+          options.onReady?.(howl);
         },
         onloaderror: () => {
           if (options.autoplay) howl.play();
@@ -185,16 +218,20 @@ export function useAudioEngine({
           startProgressLoop();
         },
         onpause: () => {
-          if (!incomingRef.current?.playing()) stopProgressLoop();
+          if (howl === howlRef.current && !incomingRef.current?.playing()) {
+            stopProgressLoop();
+          }
         },
         onstop: () => {
-          if (!incomingRef.current?.playing()) stopProgressLoop();
+          if (howl === howlRef.current && !incomingRef.current?.playing()) {
+            stopProgressLoop();
+          }
         },
       });
 
       return howl;
     },
-    [handleHowlEnd, startProgressLoop, stopProgressLoop],
+    [handleHowlEnd, reportProgress, startProgressLoop, stopProgressLoop],
   );
 
   const cancelCrossfade = useCallback(() => {
@@ -246,6 +283,7 @@ export function useAudioEngine({
 
       userVolumeRef.current = trackVolume;
       qualityRef.current = quality;
+      pendingSourceUrlRef.current = nextUrl;
       fadeWindowRef.current = Math.max(0.2, fadeSeconds);
       crossfadeStartedAtRef.current = performance.now();
       crossfadingRef.current = true;
@@ -325,21 +363,27 @@ export function useAudioEngine({
 
       const wasPlaying =
         shouldPlay || current.playing() || Boolean(incomingRef.current?.playing());
-      const currentTime = current.seek() as number;
+      const currentTime = Math.max(0, current.seek() as number);
       cancelCrossfade();
+      seekHoldRef.current = currentTime;
 
       const next = createHowl(resolvePlaybackUrl(sourceUrlRef.current, quality), trackVolume, {
         autoplay: wasPlaying,
         startAt: currentTime,
+        onReady: (howl) => {
+          howlRef.current = howl;
+          seekHoldRef.current = null;
+          if (wasPlaying) startProgressLoop();
+          if (current !== howl) unloadHowl(current);
+        },
       });
-      if (wasPlaying) next.play();
-      howlRef.current = next;
 
-      window.setTimeout(() => {
-        if (current !== howlRef.current) unloadHowl(current);
-      }, 300);
+      next.once("loaderror", () => {
+        seekHoldRef.current = null;
+        unloadHowl(next);
+      });
     },
-    [cancelCrossfade, createHowl, unloadHowl],
+    [cancelCrossfade, createHowl, startProgressLoop, unloadHowl],
   );
 
   const isCrossfading = useCallback(() => crossfadingRef.current, []);
@@ -370,5 +414,6 @@ export function useAudioEngine({
     setQuality,
     unload,
     isCrossfading,
+    completeCrossfade: finishCrossfade,
   };
 }

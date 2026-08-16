@@ -72,11 +72,11 @@ export function ProgressBar({
       >
         <div
           className="absolute inset-y-0 left-0 rounded-full bg-[var(--player-accent,var(--color-accent-primary))]"
-          style={{ width: `${progress}%` }}
+        style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
         />
         <div
           className="absolute top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-white opacity-0 transition-opacity group-hover:opacity-100"
-          style={{ left: `calc(${progress}% - 6px)` }}
+          style={{ left: `calc(${Math.min(100, Math.max(0, progress))}% - 6px)` }}
         />
       </div>
 

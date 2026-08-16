@@ -3,69 +3,99 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
 
-from accounts.models import User, UserRole, UserSettings
+from accounts.models import ArtistProfile, ArtistStatus, User, UserRole, UserSettings
 from accounts.services import generate_username
 from subscriptions.models import PricingConfig, Subscription, SubscriptionTier
 
+DEMO_PASSWORD = "123456"
+
 
 class Command(BaseCommand):
-    help = "Seed the single admin user, a support user, and default pricing."
+    help = "Seed admin, support, and demo listener/artist accounts."
 
     @transaction.atomic
     def handle(self, *args, **options):
         PricingConfig.get_solo()
 
-        admin_email = settings.ADMIN_EMAIL.lower()
-        support_email = settings.SUPPORT_EMAIL.lower()
-
-        admin, created = User.objects.get_or_create(
-            email=admin_email,
-            defaults={
-                "username": "system_admin",
-                "display_name": "System Admin",
-                "role": UserRole.ADMIN,
-                "is_staff": True,
-                "is_superuser": True,
-            },
+        admin = self._ensure_user(
+            email=settings.ADMIN_EMAIL.lower(),
+            password=DEMO_PASSWORD,
+            username="system_admin",
+            display_name="System Admin",
+            role=UserRole.ADMIN,
+            extra={"is_staff": True, "is_superuser": True},
         )
-        if created:
-            admin.set_password(settings.ADMIN_PASSWORD)
-            admin.save()
-            UserSettings.objects.get_or_create(user=admin)
-            Subscription.objects.get_or_create(
-                user=admin,
-                defaults={
-                    "tier": SubscriptionTier.GOLD,
-                    "start_date": timezone.now(),
-                    "is_active": True,
-                },
-            )
-            self.stdout.write(self.style.SUCCESS(f"Created admin: {admin_email}"))
-        else:
-            self.stdout.write(f"Admin already exists: {admin_email}")
-
-        support, created = User.objects.get_or_create(
-            email=support_email,
-            defaults={
-                "username": generate_username("support"),
-                "display_name": "Support Agent",
-                "role": UserRole.SUPPORT,
-            },
+        support = self._ensure_user(
+            email=settings.SUPPORT_EMAIL.lower(),
+            password=DEMO_PASSWORD,
+            username="support_agent",
+            display_name="Support Agent",
+            role=UserRole.SUPPORT,
         )
-        if created:
-            support.set_password(settings.SUPPORT_PASSWORD)
-            support.save()
-            UserSettings.objects.get_or_create(user=support)
-            Subscription.objects.get_or_create(
-                user=support,
-                defaults={
-                    "tier": SubscriptionTier.GOLD,
-                    "start_date": timezone.now(),
-                    "is_active": True,
-                },
-            )
-            self.stdout.write(self.style.SUCCESS(f"Created support: {support_email}"))
-        else:
-            self.stdout.write(f"Support already exists: {support_email}")
+        listener = self._ensure_user(
+            email="listener@example.com",
+            password=DEMO_PASSWORD,
+            username="ali_listener",
+            display_name="Ali Listener",
+            role=UserRole.LISTENER,
+        )
+        artist_user = self._ensure_user(
+            email="artist@example.com",
+            password=DEMO_PASSWORD,
+            username="sara_artist",
+            display_name="Sara Artist",
+            role=UserRole.ARTIST,
+        )
+        self._ensure_approved_artist(artist_user)
 
         self.stdout.write(self.style.SUCCESS("Seed complete."))
+        self.stdout.write(f"  admin    {admin.email} / {DEMO_PASSWORD}")
+        self.stdout.write(f"  support  {support.email} / {DEMO_PASSWORD}")
+        self.stdout.write(f"  listener {listener.email} / {DEMO_PASSWORD}")
+        self.stdout.write(f"  artist   {artist_user.email} / {DEMO_PASSWORD}")
+
+    def _ensure_user(self, *, email, password, username, display_name, role, extra=None):
+        defaults = {
+            "username": username,
+            "display_name": display_name,
+            "role": role,
+            **(extra or {}),
+        }
+        if User.objects.filter(username=username).exclude(email=email).exists():
+            defaults["username"] = generate_username(username)
+
+        user, created = User.objects.get_or_create(email=email, defaults=defaults)
+        user.display_name = display_name
+        user.role = role
+        for key, value in (extra or {}).items():
+            setattr(user, key, value)
+        user.set_password(password)
+        user.save()
+        UserSettings.objects.get_or_create(user=user)
+        Subscription.objects.get_or_create(
+            user=user,
+            defaults={
+                "tier": SubscriptionTier.GOLD,
+                "start_date": timezone.now(),
+                "is_active": True,
+            },
+        )
+        status = "Created" if created else "Updated"
+        self.stdout.write(self.style.SUCCESS(f"{status} {role}: {email}"))
+        return user
+
+    def _ensure_approved_artist(self, user: User) -> None:
+        profile, _ = ArtistProfile.objects.get_or_create(
+            user=user,
+            defaults={
+                "stage_name": user.display_name,
+                "portfolio": "https://example.com/sara-artist",
+                "status": ArtistStatus.APPROVED,
+                "is_verified": True,
+            },
+        )
+        if profile.status != ArtistStatus.APPROVED:
+            profile.status = ArtistStatus.APPROVED
+            profile.is_verified = True
+            profile.rejection_reason = ""
+            profile.save(update_fields=["status", "is_verified", "rejection_reason"])

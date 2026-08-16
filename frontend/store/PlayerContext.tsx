@@ -12,6 +12,7 @@ import {
   CROSSFADE_SECONDS,
   getEffectiveDuration,
   getRemainingTime,
+  isUsableDuration,
   readPlayerAdvancedSettings,
   shouldStartCrossfade,
   toggleAudioQuality,
@@ -117,6 +118,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const qualityRef = useRef(quality);
   const crossfadeEnabledRef = useRef(crossfadeEnabled);
   const pendingNextIndexRef = useRef<number | null>(null);
+  const crossfadeGuardUntilRef = useRef(0);
   const loadSongAtIndexRef = useRef<(index: number, songs: Song[], autoplay: boolean) => void>(
     () => {},
   );
@@ -134,13 +136,16 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const audioRef = useRef<ReturnType<typeof useAudioEngine> | null>(null);
 
   const handleProgress = useCallback((time: number, trackDuration: number) => {
-    setCurrentTime(time);
-    if (trackDuration > 0) {
+    if (Number.isFinite(time) && time >= 0) {
+      setCurrentTime(time);
+    }
+    if (isUsableDuration(trackDuration)) {
       setDuration(trackDuration);
     }
 
     const engine = audioRef.current;
     if (!engine) return;
+    if (Date.now() < crossfadeGuardUntilRef.current) return;
 
     const songs = queueRef.current;
     const currentSongDuration = songs[currentIndexRef.current]?.durationSeconds ?? 0;
@@ -203,10 +208,12 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     if (nextIndex === null) return;
 
     const song = queueRef.current[nextIndex];
+    currentIndexRef.current = nextIndex;
     setCurrentIndex(nextIndex);
     if (song) {
       setDuration(song.durationSeconds);
     }
+    crossfadeGuardUntilRef.current = Date.now() + 1500;
     incrementDailyStreamCount();
   }, []);
 
@@ -298,11 +305,11 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
 
   const playNext = useCallback(() => {
     const songs = queueRef.current;
-    const nextIndex = getNextIndex(
-      currentIndexRef.current,
-      songs.length,
-      repeatModeRef.current,
-    );
+    const fromIndex =
+      audio.isCrossfading() && pendingNextIndexRef.current != null
+        ? pendingNextIndexRef.current
+        : currentIndexRef.current;
+    const nextIndex = getNextIndex(fromIndex, songs.length, repeatModeRef.current);
 
     if (nextIndex === null) {
       audio.pause();
@@ -313,9 +320,12 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     if (
       crossfadeEnabledRef.current &&
       nextIndex !== currentIndexRef.current &&
-      isPlayingRef.current &&
-      !audio.isCrossfading()
+      isPlayingRef.current
     ) {
+      if (audio.isCrossfading()) {
+        audio.completeCrossfade();
+      }
+
       const nextSong = songs[nextIndex];
       const started = audio.beginCrossfade(
         getSongAudioUrl(nextSong),
