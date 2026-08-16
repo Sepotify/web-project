@@ -72,7 +72,15 @@ export default function PaymentPage() {
       window.location.href = session.payment_url;
     } catch (err) {
       setSubmitting(false);
-      setError(err instanceof ApiError ? err.message : "Could not start checkout.");
+      if (err instanceof ApiError) {
+        setError(err.message);
+        return;
+      }
+      const hint =
+        err instanceof Error && err.message ? ` (${err.message})` : "";
+      setError(
+        `Could not start checkout${hint}. Use http://localhost:3000 and keep the Django server running.`,
+      );
     }
   }
 
