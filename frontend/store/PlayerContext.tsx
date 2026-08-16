@@ -1,7 +1,21 @@
 "use client";
 
 import { useAudioEngine } from "@/hooks/useAudioEngine";
-import { getSongAudioUrl } from "@/lib/audio";
+import { getPlayableMediaUrl, getPlayableSongAudioUrl } from "@/lib/audio";
+import {
+  accentFromSeed,
+  extractDominantColor,
+  mixWithWhite,
+  rgbToCss,
+} from "@/lib/cover-color";
+import {
+  getRemainingTime,
+  readPlayerAdvancedSettings,
+  shouldStartCrossfade,
+  toggleAudioQuality,
+  writePlayerAdvancedSettings,
+  type AudioQuality,
+} from "@/lib/player-advanced";
 import {
   cycleRepeatMode,
   getNextIndex,
@@ -17,6 +31,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -35,6 +50,10 @@ interface PlayerContextValue {
   shuffle: boolean;
   isQueueOpen: boolean;
   isExpanded: boolean;
+  quality: AudioQuality;
+  crossfadeEnabled: boolean;
+  accentColor: string;
+  accentHover: string;
   playSong: (song: Song, queue?: Song[]) => void;
   playQueue: (songs: Song[], startIndex?: number) => void;
   togglePlay: () => void;
@@ -51,6 +70,9 @@ interface PlayerContextValue {
   toggleQueue: () => void;
   expandPlayer: () => void;
   collapsePlayer: () => void;
+  setQuality: (quality: AudioQuality) => void;
+  toggleQuality: () => void;
+  toggleCrossfade: () => void;
 }
 
 const PlayerContext = createContext<PlayerContextValue | null>(null);
@@ -75,6 +97,13 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const [shuffle, setShuffle] = useState(false);
   const [isQueueOpen, setIsQueueOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [quality, setQualityState] = useState<AudioQuality>(
+    () => readPlayerAdvancedSettings().quality,
+  );
+  const [crossfadeEnabled, setCrossfadeEnabled] = useState(
+    () => readPlayerAdvancedSettings().crossfadeEnabled,
+  );
+  const [accent, setAccent] = useState(() => accentFromSeed(""));
 
   const queueRef = useRef(queue);
   const currentIndexRef = useRef(currentIndex);
@@ -83,6 +112,9 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const originalQueueRef = useRef(originalQueue);
   const isPlayingRef = useRef(isPlaying);
   const volumeRef = useRef(volume);
+  const qualityRef = useRef(quality);
+  const crossfadeEnabledRef = useRef(crossfadeEnabled);
+  const pendingNextIndexRef = useRef<number | null>(null);
   const loadSongAtIndexRef = useRef<(index: number, songs: Song[], autoplay: boolean) => void>(
     () => {},
   );
@@ -94,15 +126,57 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   originalQueueRef.current = originalQueue;
   isPlayingRef.current = isPlaying;
   volumeRef.current = volume;
+  qualityRef.current = quality;
+  crossfadeEnabledRef.current = crossfadeEnabled;
+
+  const audioRef = useRef<ReturnType<typeof useAudioEngine> | null>(null);
 
   const handleProgress = useCallback((time: number, trackDuration: number) => {
     setCurrentTime(time);
     if (trackDuration > 0) {
       setDuration(trackDuration);
     }
+
+    const engine = audioRef.current;
+    if (!engine) return;
+
+    const songs = queueRef.current;
+    const nextIndex = getNextIndex(
+      currentIndexRef.current,
+      songs.length,
+      repeatModeRef.current,
+    );
+    const hasNextTrack = nextIndex !== null && nextIndex !== currentIndexRef.current;
+    const remaining = getRemainingTime(time, trackDuration);
+
+    if (
+      !shouldStartCrossfade({
+        enabled: crossfadeEnabledRef.current,
+        isAlreadyCrossfading: engine.isCrossfading(),
+        remaining,
+        hasNextTrack,
+      }) ||
+      nextIndex === null
+    ) {
+      return;
+    }
+
+    const nextSong = songs[nextIndex];
+    if (!nextSong) return;
+
+    const started = engine.beginCrossfade(
+      getPlayableSongAudioUrl(nextSong),
+      volumeRef.current,
+      remaining,
+      qualityRef.current,
+    );
+    if (started) {
+      pendingNextIndexRef.current = nextIndex;
+    }
   }, []);
 
   const handleTrackEnd = useCallback(() => {
+    pendingNextIndexRef.current = null;
     const songs = queueRef.current;
     const index = currentIndexRef.current;
     const mode = repeatModeRef.current;
@@ -117,22 +191,38 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     loadSongAtIndexRef.current(nextIndex, songs, true);
   }, []);
 
+  const handleCrossfadeComplete = useCallback(() => {
+    const nextIndex = pendingNextIndexRef.current;
+    pendingNextIndexRef.current = null;
+    if (nextIndex === null) return;
+
+    const song = queueRef.current[nextIndex];
+    setCurrentIndex(nextIndex);
+    if (song) {
+      setDuration(song.durationSeconds);
+    }
+    incrementDailyStreamCount();
+  }, []);
+
   const audio = useAudioEngine({
     onTrackEnd: handleTrackEnd,
     onProgress: handleProgress,
+    onCrossfadeComplete: handleCrossfadeComplete,
   });
+  audioRef.current = audio;
 
   const loadSongAtIndex = useCallback(
     (index: number, songs: Song[], autoplay: boolean) => {
       const song = songs[index];
       if (!song) return;
 
+      pendingNextIndexRef.current = null;
       setCurrentIndex(index);
       setCurrentTime(0);
       setDuration(song.durationSeconds);
 
-      const url = getSongAudioUrl(song);
-      audio.loadTrack(url, volumeRef.current, autoplay);
+      const url = getPlayableSongAudioUrl(song);
+      audio.loadTrack(url, volumeRef.current, autoplay, qualityRef.current);
       setIsPlaying(autoplay);
 
       if (autoplay) {
@@ -145,6 +235,27 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   loadSongAtIndexRef.current = loadSongAtIndex;
 
   const currentSong = queue[currentIndex] ?? null;
+  const accentColor = rgbToCss(accent);
+  const accentHover = rgbToCss(mixWithWhite(accent, 0.22));
+
+  useEffect(() => {
+    if (!currentSong) {
+      setAccent(accentFromSeed(""));
+      return;
+    }
+
+    setAccent(accentFromSeed(currentSong.title));
+    if (!currentSong.coverUrl) return;
+
+    let cancelled = false;
+    void extractDominantColor(getPlayableMediaUrl(currentSong.coverUrl)).then((rgb) => {
+      if (!cancelled && rgb) setAccent(rgb);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentSong?.id, currentSong?.coverUrl, currentSong?.title]);
 
   const playQueue = useCallback(
     (songs: Song[], startIndex = 0) => {
@@ -230,6 +341,35 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const toggleRepeat = useCallback(() => {
     setRepeatMode((current) => cycleRepeatMode(current));
   }, []);
+
+  const setQuality = useCallback(
+    (nextQuality: AudioQuality) => {
+      setQualityState(nextQuality);
+      qualityRef.current = nextQuality;
+      audio.setQuality(nextQuality, volumeRef.current);
+      writePlayerAdvancedSettings({
+        quality: nextQuality,
+        crossfadeEnabled: crossfadeEnabledRef.current,
+      });
+    },
+    [audio],
+  );
+
+  const toggleQuality = useCallback(() => {
+    setQuality(toggleAudioQuality(qualityRef.current));
+  }, [setQuality]);
+
+  const toggleCrossfade = useCallback(() => {
+    setCrossfadeEnabled((current) => {
+      const next = !current;
+      if (!next) audio.cancelCrossfade();
+      writePlayerAdvancedSettings({
+        quality: qualityRef.current,
+        crossfadeEnabled: next,
+      });
+      return next;
+    });
+  }, [audio]);
 
   const toggleShuffle = useCallback(() => {
     setShuffle((currentShuffle) => {
@@ -323,6 +463,10 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       shuffle,
       isQueueOpen,
       isExpanded,
+      quality,
+      crossfadeEnabled,
+      accentColor,
+      accentHover,
       playSong,
       playQueue,
       togglePlay,
@@ -339,6 +483,9 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       toggleQueue: () => setIsQueueOpen((open) => !open),
       expandPlayer: () => setIsExpanded(true),
       collapsePlayer: () => setIsExpanded(false),
+      setQuality,
+      toggleQuality,
+      toggleCrossfade,
     }),
     [
       currentSong,
@@ -352,6 +499,10 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       shuffle,
       isQueueOpen,
       isExpanded,
+      quality,
+      crossfadeEnabled,
+      accentColor,
+      accentHover,
       playSong,
       playQueue,
       togglePlay,
@@ -363,6 +514,9 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       toggleShuffle,
       removeFromQueue,
       reorderQueue,
+      setQuality,
+      toggleQuality,
+      toggleCrossfade,
     ],
   );
 

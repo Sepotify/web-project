@@ -71,7 +71,7 @@ export function ProgressBar({
         onPointerUp={handlePointerUp}
       >
         <div
-          className="absolute inset-y-0 left-0 rounded-full bg-accent-primary"
+          className="absolute inset-y-0 left-0 rounded-full bg-[var(--player-accent,var(--color-accent-primary))]"
           style={{ width: `${progress}%` }}
         />
         <div

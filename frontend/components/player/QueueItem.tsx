@@ -30,8 +30,9 @@ export function QueueItem({
     <div
       className={cn(
         "flex items-center gap-2 rounded-md border border-border-default p-2",
-        isCurrent ? "bg-bg-hover border-accent-primary/40" : "bg-bg-elevated",
+        isCurrent ? "bg-bg-hover" : "bg-bg-elevated",
       )}
+      style={isCurrent ? { borderColor: "var(--player-accent, var(--color-accent-primary))" } : undefined}
     >
       <span className="w-5 text-center text-xs text-text-muted">{index + 1}</span>
 

@@ -30,9 +30,10 @@ export function VolumeSlider({
         onChange={(event) => onChange(Number(event.target.value))}
         aria-label="Volume"
         className={cn(
-          "cursor-pointer appearance-none rounded-full bg-bg-hover accent-accent-primary",
+          "cursor-pointer appearance-none rounded-full bg-bg-hover",
           compact ? "h-1.5 w-20" : "h-2 w-24",
         )}
+        style={{ accentColor: "var(--player-accent, var(--color-accent-primary))" }}
       />
     </div>
   );

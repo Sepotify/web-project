@@ -3,6 +3,7 @@
 import { usePlayer } from "@/hooks/usePlayer";
 import { NowPlayingInfo } from "@/components/player/NowPlayingInfo";
 import { PlayerControls } from "@/components/player/PlayerControls";
+import { PlayerExtras } from "@/components/player/PlayerExtras";
 import { ProgressBar } from "@/components/player/ProgressBar";
 import { VolumeSlider } from "@/components/player/VolumeSlider";
 import { LyricsPanel } from "@/components/player/LyricsPanel";
@@ -29,6 +30,10 @@ export function FullScreenPlayer() {
     toggleRepeat,
     toggleShuffle,
     toggleQueue,
+    quality,
+    crossfadeEnabled,
+    toggleQuality,
+    toggleCrossfade,
   } = usePlayer();
 
   if (!currentSong || !isExpanded) return null;
@@ -63,7 +68,15 @@ export function FullScreenPlayer() {
 
         <ProgressBar currentTime={currentTime} duration={duration} onSeek={seek} />
 
-        <VolumeSlider volume={volume} onChange={setVolume} />
+        <div className="flex items-center justify-between gap-3">
+          <VolumeSlider volume={volume} onChange={setVolume} />
+          <PlayerExtras
+            quality={quality}
+            crossfadeEnabled={crossfadeEnabled}
+            onToggleQuality={toggleQuality}
+            onToggleCrossfade={toggleCrossfade}
+          />
+        </div>
 
         <GoldStats song={currentSong} />
 

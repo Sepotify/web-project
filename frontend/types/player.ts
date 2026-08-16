@@ -1,4 +1,5 @@
 import type { Song } from "@/types";
+import type { AudioQuality } from "@/lib/player-advanced";
 
 export type RepeatMode = "off" | "all" | "one";
 
@@ -19,4 +20,7 @@ export interface PlayerSnapshot {
   shuffle: boolean;
   isQueueOpen: boolean;
   isExpanded: boolean;
+  quality: AudioQuality;
+  crossfadeEnabled: boolean;
+  accentColor: string;
 }

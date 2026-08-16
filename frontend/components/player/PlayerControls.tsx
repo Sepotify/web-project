@@ -40,7 +40,7 @@ export function PlayerControls({
         onClick={onToggleShuffle}
         aria-label={shuffle ? "Disable shuffle" : "Enable shuffle"}
         aria-pressed={shuffle}
-        className={cn(shuffle && "text-accent-primary")}
+        className={cn(shuffle && "text-[var(--player-accent,var(--color-accent-primary))]")}
       >
         <span className={iconSize}>🔀</span>
       </Button>
@@ -54,7 +54,7 @@ export function PlayerControls({
         size={size === "lg" ? "lg" : "md"}
         onClick={onTogglePlay}
         aria-label={isPlaying ? "Pause" : "Play"}
-        className="rounded-full px-4"
+        className="rounded-full px-4 bg-[var(--player-accent,var(--color-accent-primary))] hover:bg-[var(--player-accent-hover,var(--color-accent-primary-hover))]"
       >
         <span className={size === "lg" ? "text-2xl" : "text-xl"}>
           {isPlaying ? "⏸" : "▶"}
@@ -71,7 +71,7 @@ export function PlayerControls({
         onClick={onToggleRepeat}
         aria-label={getRepeatModeLabel(repeatMode)}
         aria-pressed={repeatMode !== "off"}
-        className={cn(repeatMode !== "off" && "text-accent-primary")}
+        className={cn(repeatMode !== "off" && "text-[var(--player-accent,var(--color-accent-primary))]")}
       >
         <span className={iconSize}>
           {repeatMode === "one" ? "🔂" : "🔁"}

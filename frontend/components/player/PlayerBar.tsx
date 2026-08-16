@@ -5,6 +5,7 @@ import { GoldStats } from "@/components/player/GoldStats";
 import { LyricsPanel } from "@/components/player/LyricsPanel";
 import { NowPlayingInfo } from "@/components/player/NowPlayingInfo";
 import { PlayerControls } from "@/components/player/PlayerControls";
+import { PlayerExtras } from "@/components/player/PlayerExtras";
 import { ProgressBar } from "@/components/player/ProgressBar";
 import { VolumeSlider } from "@/components/player/VolumeSlider";
 import { Button } from "@/components/ui/Button";
@@ -29,6 +30,10 @@ export function PlayerBar() {
     toggleRepeat,
     toggleShuffle,
     toggleQueue,
+    quality,
+    crossfadeEnabled,
+    toggleQuality,
+    toggleCrossfade,
   } = usePlayer();
 
   if (!currentSong) return null;
@@ -80,7 +85,13 @@ export function PlayerBar() {
             />
           </div>
 
-          <div className="flex w-64 shrink-0 items-center justify-end gap-2">
+          <div className="flex w-72 shrink-0 items-center justify-end gap-2">
+            <PlayerExtras
+              quality={quality}
+              crossfadeEnabled={crossfadeEnabled}
+              onToggleQuality={toggleQuality}
+              onToggleCrossfade={toggleCrossfade}
+            />
             <Button
               variant="ghost"
               size="sm"
