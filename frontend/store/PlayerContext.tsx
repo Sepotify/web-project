@@ -9,6 +9,8 @@ import {
   rgbToCss,
 } from "@/lib/cover-color";
 import {
+  CROSSFADE_SECONDS,
+  getEffectiveDuration,
   getRemainingTime,
   readPlayerAdvancedSettings,
   shouldStartCrossfade,
@@ -141,13 +143,17 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     if (!engine) return;
 
     const songs = queueRef.current;
+    const currentSongDuration = songs[currentIndexRef.current]?.durationSeconds ?? 0;
     const nextIndex = getNextIndex(
       currentIndexRef.current,
       songs.length,
       repeatModeRef.current,
     );
     const hasNextTrack = nextIndex !== null && nextIndex !== currentIndexRef.current;
-    const remaining = getRemainingTime(time, trackDuration);
+    const remaining = getRemainingTime(
+      time,
+      getEffectiveDuration(trackDuration, currentSongDuration),
+    );
 
     if (
       !shouldStartCrossfade({
@@ -304,6 +310,25 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    if (
+      crossfadeEnabledRef.current &&
+      nextIndex !== currentIndexRef.current &&
+      isPlayingRef.current &&
+      !audio.isCrossfading()
+    ) {
+      const nextSong = songs[nextIndex];
+      const started = audio.beginCrossfade(
+        getSongAudioUrl(nextSong),
+        volumeRef.current,
+        CROSSFADE_SECONDS,
+        qualityRef.current,
+      );
+      if (started) {
+        pendingNextIndexRef.current = nextIndex;
+        return;
+      }
+    }
+
     loadSongAtIndex(nextIndex, songs, true);
   }, [audio, loadSongAtIndex]);
 
@@ -345,7 +370,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     (nextQuality: AudioQuality) => {
       setQualityState(nextQuality);
       qualityRef.current = nextQuality;
-      audio.setQuality(nextQuality, volumeRef.current);
+      audio.setQuality(nextQuality, volumeRef.current, isPlayingRef.current);
       writePlayerAdvancedSettings({
         quality: nextQuality,
         crossfadeEnabled: crossfadeEnabledRef.current,
@@ -361,6 +386,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
   const toggleCrossfade = useCallback(() => {
     setCrossfadeEnabled((current) => {
       const next = !current;
+      crossfadeEnabledRef.current = next;
       if (!next) audio.cancelCrossfade();
       writePlayerAdvancedSettings({
         quality: qualityRef.current,

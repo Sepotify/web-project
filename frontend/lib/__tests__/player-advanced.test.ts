@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   CROSSFADE_SECONDS,
   crossfadeVolumeFactors,
+  getEffectiveDuration,
   getQualityCutoffHz,
   getRemainingTime,
   isAudioQuality,
@@ -67,5 +68,11 @@ describe("crossfade helpers", () => {
   it("clamps remaining time to the track duration", () => {
     expect(getRemainingTime(10, 8)).toBe(0);
     expect(getRemainingTime(3, 10)).toBe(7);
+  });
+
+  it("falls back to song duration when Howler has not reported length yet", () => {
+    expect(getEffectiveDuration(0, 180)).toBe(180);
+    expect(getEffectiveDuration(Number.NaN, 180)).toBe(180);
+    expect(getEffectiveDuration(367, 30)).toBe(367);
   });
 });

@@ -32,6 +32,19 @@ function getQualityContext(): AudioContext | null {
   return qualityContext;
 }
 
+export async function unlockQualityContext(): Promise<boolean> {
+  const ctx = getQualityContext();
+  if (!ctx) return false;
+  if (ctx.state === "suspended") {
+    try {
+      await ctx.resume();
+    } catch {
+      return false;
+    }
+  }
+  return ctx.state === "running";
+}
+
 function applyCutoff(filter: BiquadFilterNode, quality: AudioQuality): void {
   const ctx = filter.context;
   const cutoff = getQualityCutoffHz(quality);
@@ -75,6 +88,7 @@ export async function attachQualityGraph(howl: Howl, quality: AudioQuality = cur
     if (ctx.state === "suspended") {
       await ctx.resume();
     }
+    if (ctx.state !== "running") return false;
 
     const source = ctx.createMediaElementSource(element);
     const filter = ctx.createBiquadFilter();

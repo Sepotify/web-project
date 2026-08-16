@@ -22,34 +22,26 @@ export function PlayerExtras({
   return (
     <div className={cn("flex items-center gap-1", compact && "scale-90")}>
       <Button
-        variant="ghost"
+        type="button"
+        variant={quality === "high" ? "primary" : "ghost"}
         size="sm"
         onClick={onToggleQuality}
         aria-label={getQualityLabel(quality)}
         aria-pressed={quality === "high"}
-        className={cn(
-          "min-w-[2.5rem] px-2 text-xs font-bold uppercase tracking-wide",
-          quality === "high"
-            ? "text-[var(--player-accent,var(--color-accent-primary))]"
-            : "text-text-muted",
-        )}
+        className="min-w-[3.25rem] px-2 text-xs font-bold uppercase tracking-wide"
       >
         {quality === "high" ? "High" : "Low"}
       </Button>
       <Button
-        variant="ghost"
+        type="button"
+        variant={crossfadeEnabled ? "primary" : "ghost"}
         size="sm"
         onClick={onToggleCrossfade}
         aria-label={crossfadeEnabled ? "Disable crossfade" : "Enable crossfade"}
         aria-pressed={crossfadeEnabled}
-        className={cn(
-          "px-2 text-xs font-semibold",
-          crossfadeEnabled
-            ? "text-[var(--player-accent,var(--color-accent-primary))]"
-            : "text-text-muted",
-        )}
+        className="px-2 text-xs font-semibold"
       >
-        Fade
+        {crossfadeEnabled ? "Fade on" : "Fade"}
       </Button>
     </div>
   );

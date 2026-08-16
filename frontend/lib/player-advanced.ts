@@ -33,8 +33,15 @@ export function toggleAudioQuality(current: AudioQuality): AudioQuality {
 }
 
 export function getRemainingTime(currentTime: number, duration: number): number {
-  if (duration <= 0) return 0;
+  if (!Number.isFinite(duration) || duration <= 0) return 0;
+  if (!Number.isFinite(currentTime)) return duration;
   return Math.max(0, duration - currentTime);
+}
+
+export function getEffectiveDuration(howlDuration: number, songDuration: number): number {
+  if (Number.isFinite(howlDuration) && howlDuration > 1) return howlDuration;
+  if (Number.isFinite(songDuration) && songDuration > 0) return songDuration;
+  return 0;
 }
 
 export function shouldStartCrossfade(options: {
