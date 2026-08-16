@@ -31,18 +31,18 @@ export interface HomeFeed {
 
 export async function fetchHomeFeed(
   useApi: boolean,
-  limit = HOME_ALBUM_LIMIT,
+  _limit = HOME_ALBUM_LIMIT,
 ): Promise<HomeFeed> {
   if (!useApi) {
     return {
-      latestAlbums: getLatestAlbums(limit),
-      popularSongs: getPopularSongs(limit),
+      latestAlbums: getLatestAlbums(_limit),
+      popularSongs: getPopularSongs(_limit),
       earlyAccessSongs: getEarlyAccessSongs(),
     };
   }
 
   try {
-    const data = await apiFetchHomeFeed(limit);
+    const data = await apiFetchHomeFeed();
     return {
       latestAlbums: data.latest_albums.map(mapApiAlbum),
       popularSongs: data.popular_songs.map(mapApiSong),
@@ -50,8 +50,8 @@ export async function fetchHomeFeed(
     };
   } catch {
     return {
-      latestAlbums: getLatestAlbums(limit),
-      popularSongs: getPopularSongs(limit),
+      latestAlbums: getLatestAlbums(_limit),
+      popularSongs: getPopularSongs(_limit),
       earlyAccessSongs: getEarlyAccessSongs(),
     };
   }
