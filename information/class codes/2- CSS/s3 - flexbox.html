@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Flexbox Example</title>
+  <style>
+    .container {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      /* center, flex-start, flex-end, stretch */
+      justify-content: flex-start;
+      /* center, space-between, flex-start, flex-end, space-around, space-evenly */
+
+      height: 200px;
+      background-color: #f0f0f0;
+      border: 2px solid #ccc;
+      padding: 10px;
+    }
+
+    .box {
+      /* max-width: 30px; */
+
+      height: 80px;
+      background-color: steelblue;
+      color: white;
+      font-size: 18px;
+      margin: 5px;
+      border-radius: 8px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      /* Flex item properties */
+      flex: 1 2 50px;
+      /* flex-grow: 1, flex-shrink: 1, flex-basis: 100px */
+      align-self: auto;
+      /* flex-start, stretch, auto */
+      order: 0;
+      /* controls visual order */
+    }
+
+    .box:nth-child(2) {
+      flex-grow: 6;
+      flex-basis: 150px;
+      align-self: auto;
+      order: 5;
+      background-color: tomato;
+    }
+  </style>
+</head>
+
+<body>
+  <h2>Simple Flexbox Layout</h2>
+
+  <div class="container">
+    <div class="box">1</div>
+    <div class="box">2</div>
+    <div class="box">3</div>
+  </div>
+</body>
+
+</html>

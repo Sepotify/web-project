@@ -1,9 +1,31 @@
+# Env / secrets
 .env
 backend/.env
-backend/db.sqlite3
-backend/**/__pycache__/
-backend/**/*.pyc
+frontend/.env.local
+frontend/.env*.local
+
+# Python
 .venv/
+venv/
 __pycache__/
-*.pyc
+**/__pycache__/
+*.py[cod]
+*.sqlite3
+db.sqlite3
+backend/db.sqlite3
+
+# Node / Next (root leftovers + monorepo)
+node_modules/
+.next/
+out/
+build/
+coverage/
+
+# Local / course notes (Sam)
+/information
+
+# OS / IDE
 .DS_Store
+.idea/
+.vscode/
+*.log

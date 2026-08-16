@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dr. Alex Morgan – Academic Homepage</title>
+  <style>
+    body { font-family: "Times New Roman", serif; margin: 0; background: #f4f6f9; color: #222; }
+    header { background: #1a3a5c; color: white; padding: 2.5rem 3rem; display: flex; align-items: center; gap: 2rem; }
+    header img { width: 110px; height: 110px; border-radius: 50%; border: 3px solid #fff; object-fit: cover; }
+    header h1 { margin: 0 0 0.3rem; font-size: 2rem; }
+    header p { margin: 0.2rem 0; font-size: 1rem; opacity: 0.85; }
+    header a { color: #90caf9; text-decoration: none; }
+    nav { background: #14304d; display: flex; gap: 0; }
+    nav a { color: #cde; padding: 0.8rem 1.5rem; text-decoration: none; font-size: 0.95rem; display: block; }
+    nav a:hover { background: #1a3a5c; color: white; }
+    .container { max-width: 1000px; margin: 2rem auto; padding: 0 1.5rem; display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; }
+    section { background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 1.5rem; }
+    h2 { color: #1a3a5c; border-bottom: 2px solid #1a3a5c; padding-bottom: 0.4rem; margin-top: 0; }
+    h3 { color: #14304d; margin: 1rem 0 0.3rem; }
+    p { line-height: 1.7; }
+    ul, ol { padding-left: 1.4rem; line-height: 1.9; }
+    a { color: #1a6fc4; }
+    .badge { display: inline-block; background: #e3f0ff; color: #1a3a5c; border: 1px solid #90caf9; border-radius: 20px; padding: 3px 12px; font-size: 0.82em; margin: 3px 2px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.93em; }
+    th { background: #1a3a5c; color: white; padding: 0.6rem 0.8rem; text-align: left; }
+    td { padding: 0.55rem 0.8rem; border-bottom: 1px solid #e0e0e0; }
+    tr:nth-child(even) td { background: #f0f5ff; }
+    blockquote { border-left: 4px solid #1a3a5c; margin: 1rem 0; padding: 0.7rem 1.2rem; background: #f0f5ff; color: #333; font-style: italic; border-radius: 0 6px 6px 0; }
+    .pub-item { border-left: 3px solid #90caf9; padding: 0.6rem 1rem; margin-bottom: 1rem; background: #f8fbff; border-radius: 0 6px 6px 0; }
+    .pub-item span { font-size: 0.82em; color: #888; }
+    .sidebar section { margin-bottom: 1.5rem; }
+    figure { margin: 1rem 0; text-align: center; }
+    figure img { max-width: 100%; border-radius: 6px; border: 1px solid #ddd; }
+    figcaption { font-size: 0.85em; color: #666; margin-top: 0.4rem; }
+    form label { display: block; font-weight: bold; margin: 0.8rem 0 0.2rem; font-size: 0.93em; }
+    form input, form textarea, form select { width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 5px; font-size: 0.93em; box-sizing: border-box; }
+    form textarea { resize: vertical; }
+    form button { margin-top: 1rem; background: #1a3a5c; color: white; border: none; padding: 0.6rem 1.8rem; border-radius: 5px; cursor: pointer; font-size: 0.95em; }
+    form button:hover { background: #14304d; }
+    .progress-bar { background: #e0e0e0; border-radius: 10px; height: 10px; margin: 4px 0 10px; }
+    .progress-bar span { display: block; height: 10px; border-radius: 10px; background: #1a3a5c; }
+    details { margin: 0.6rem 0; border: 1px solid #ddd; border-radius: 6px; padding: 0.5rem 1rem; }
+    summary { cursor: pointer; font-weight: bold; color: #1a3a5c; }
+    footer { background: #1a3a5c; color: #cde; text-align: center; padding: 1.5rem; margin-top: 2rem; font-size: 0.9em; }
+    footer a { color: #90caf9; }
+    @media (max-width: 700px) { .container { grid-template-columns: 1fr; } header { flex-direction: column; text-align: center; } }
+  </style>
+</head>
+<body>
+
+<!-- ========== HEADER ========== -->
+<header>
+  <img src="https://i.pravatar.cc/150?img=12" alt="Profile photo of Dr. Alex Morgan">
+  <div>
+    <h1>Dr. Alex Morgan</h1>
+    <p>Associate Professor &bull; Department of Computer Science</p>
+    <p>University of Technology &bull; Web Systems &amp; Internet Engineering Lab</p>
+    <p>
+      <a href="mailto:[email]">&#9993; [email]</a> &nbsp;|&nbsp;
+      <a href="tel:[phone_number]">&#128222; [phone_number]</a> &nbsp;|&nbsp;
+      <a href="https://github.com" target="_blank">GitHub</a> &nbsp;|&nbsp;
+      <a href="https://linkedin.com" target="_blank">LinkedIn</a>
+    </p>
+  </div>
+</header>
+
+<!-- ========== NAVIGATION ========== -->
+<nav>
+  <a href="#about">About</a>
+  <a href="#research">Research</a>
+  <a href="#publications">Publications</a>
+  <a href="#courses">Courses</a>
+  <a href="#contact">Contact</a>
+</nav>
+
+<div class="container">
+
+  <!-- ========== MAIN COLUMN ========== -->
+  <main>
+
+    <!-- ABOUT -->
+    <section id="about">
+      <h2>About Me</h2>
+      <p>
+        I am an Associate Professor specializing in <strong>Web Programming</strong>,
+        <em>Full-Stack Development</em>, and <mark>Progressive Web Applications</mark>.
+        My work bridges academic research and real-world software engineering.
+      </p>
+      <blockquote>
+        "The web is not just a technology — it is the most powerful platform for human communication ever built."
+      </blockquote>
+      <p>
+        I received my Ph.D. in Computer Science from MIT, with a dissertation on
+        <em>Scalable Architectures for Real-Time Web Applications</em>.
+        Before joining academia, I worked as a senior engineer at several tech companies,
+        building large-scale distributed web systems.
+      </p>
+
+      <!-- Figure / Image -->
+      <figure>
+        <img src="https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=700&q=60" alt="Code on a monitor screen">
+        <figcaption>Fig 1. Modern web development environment</figcaption>
+      </figure>
+    </section>
+
+    <!-- RESEARCH -->
+    <section id="research">
+      <h2>Research Interests</h2>
+      <ul>
+        <li>Progressive Web Apps (PWA) &amp; Service Workers</li>
+        <li>WebAssembly and browser-native performance</li>
+        <li>RESTful &amp; GraphQL API design</li>
+        <li>Web security: XSS, CSRF, OAuth 2.0</li>
+        <li>Accessibility and inclusive web design</li>
+        <li>Real-time systems with WebSockets</li>
+      </ul>
+
+      <h3>Ongoing Projects</h3>
+      <ol>
+        <li><strong>EduWeb</strong> – An adaptive LMS built entirely on web standards</li>
+        <li><strong>SecureForm</strong> – A library for client-side form validation &amp; sanitization</li>
+        <li><strong>WebPerf Monitor</strong> – Real-time browser performance analytics dashboard</li>
+      </ol>
+
+      <!-- Details / Accordion -->
+      <h3>Project Details</h3>
+      <details>
+        <summary>EduWeb – Adaptive Learning Management System</summary>
+        <p>EduWeb uses machine learning on the client side via TensorFlow.js to adapt content delivery based on student interaction patterns. Built with vanilla JS, Web Components, and IndexedDB.</p>
+      </details>
+      <details>
+        <summary>SecureForm – Client-Side Validation Library</summary>
+        <p>A lightweight (~4kb gzipped) library providing declarative form validation, CSRF token injection, and input sanitization. Zero dependencies.</p>
+      </details>
+    </section>
+
+    <!-- PUBLICATIONS -->
+    <section id="publications">
+      <h2>Selected Publications</h2>
+
+      <div class="pub-item">
+        <strong>Morgan, A.</strong> (2025). "WebAssembly as a First-Class Citizen in Modern SPAs."
+        <em>IEEE Transactions on Web Engineering</em>, 18(3), 45–60.
+        <br><span>DOI: 10.1109/TWE.2025.001 &nbsp;|&nbsp; <a href="#">PDF</a></span>
+      </div>
+
+      <div class="pub-item">
+        <strong>Morgan, A.</strong>, &amp; Lee, J. (2024). "Securing REST APIs Against Injection Attacks."
+        <em>ACM Web Conference Proceedings</em>, pp. 210–225.
+        <br><span>DOI: 10.1145/ACM.2024.210 &nbsp;|&nbsp; <a href="#">PDF</a></span>
+      </div>
+
+      <div class="pub-item">
+        <strong>Morgan, A.</strong> (2023). "Progressive Enhancement in the Age of JavaScript Frameworks."
+        <em>Journal of Web Technology</em>, 11(1), 5–19.
+        <br><span>DOI: 10.1007/JWT.2023.005 &nbsp;|&nbsp; <a href="#">PDF</a></span>
+      </div>
+
+      <!-- Table -->
+      <h3>Publication Summary</h3>
+      <table>
+        <thead>
+          <tr><th>Year</th><th>Title (short)</th><th>Venue</th><th>Citations</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>2025</td><td>WebAssembly in SPAs</td><td>IEEE TWE</td><td>12</td></tr>
+          <tr><td>2024</td><td>Securing REST APIs</td><td>ACM WWW</td><td>34</td></tr>
+          <tr><td>2023</td><td>Progressive Enhancement</td><td>JWT</td><td>58</td></tr>
+          <tr><td>2022</td><td>PWA Performance Metrics</td><td>USENIX Web</td><td>91</td></tr>
+        </tbody>
+        <tfoot>
+          <tr><td colspan="3"><strong>Total Citations</strong></td><td><strong>195</strong></td></tr>
+        </tfoot>
+      </table>
+    </section>
+
+    <!-- COURSES -->
+    <section id="courses">
+      <h2>Courses Taught</h2>
+      <table>
+        <thead>
+          <tr><th>Code</th><th>Course</th><th>Level</th><th>Semester</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>CS301</td><td>HTML &amp; CSS Fundamentals</td><td>Undergraduate</td><td>Fall</td></tr>
+          <tr><td>CS302</td><td>JavaScript &amp; DOM Programming</td><td>Undergraduate</td><td>Spring</td></tr>
+          <tr><td>CS410</td><td>Full-Stack Web Development</td><td>Undergraduate</td><td>Fall</td></tr>
+          <tr><td>CS510</td><td>Advanced Web Architectures</td><td>Graduate</td><td>Spring</td></tr>
+          <tr><td>CS520</td><td>Web Security &amp; Privacy</td><td>Graduate</td><td>Fall</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- CONTACT FORM -->
+    <section id="contact">
+      <h2>Contact Me</h2>
+      <p>Feel free to reach out for collaboration, student inquiries, or speaking invitations.</p>
+      <form onsubmit="alert('Message sent! (demo)'); return false;">
+        <label for="fname">Full Name</label>
+        <input type="text" id="fname" name="name" placeholder="[name]" required>
+
+        <label for="femail">Email Address</label>
+        <input type="email" id="femail" name="email" placeholder="[email]" required>
+
+        <label for="fsubject">Subject</label>
+        <select id="fsubject" name="subject">
+          <option value="">-- Select a topic --</option>
+          <option value="collab">Research Collaboration</option>
+          <option value="student">Student Inquiry</option>
+          <option value="speaking">Speaking Invitation</option>
+          <option value="other">Other</option>
+        </select>
+
+        <label for="fmsg">Message</label>
+        <textarea id="fmsg" name="message" rows="5" placeholder="Write your message here..." required></textarea>
+
+        <label>
+          <input type="checkbox" name="consent" required>
+          I agree that my data may be used to respond to this inquiry.
+        </label>
+
+        <button type="submit">Send Message</button>
+      </form>
+    </section>
+
+  </main>
+
+  <!-- ========== SIDEBAR ========== -->
+  <aside class="sidebar">
+
+    <section>
+      <h2>Skills</h2>
+      <p><strong>HTML5 / CSS3</strong></p>
+      <div class="progress-bar"><span style="width:98%"></span></div>
+      <p><strong>JavaScript / TypeScript</strong></p>
+      <div class="progress-bar"><span style="width:95%"></span></div>
+      <p><strong>React / Vue / Angular</strong></p>
+      <div class="progress-bar"><span style="width:88%"></span></div>
+      <p><strong>Node.js / Express</strong></p>
+      <div class="progress-bar"><span style="width:85%"></span></div>
+      <p><strong>Web Security</strong></p>
+      <div class="progress-bar"><span style="width:80%"></span></div>
+      <p><strong>WebAssembly</strong></p>
+      <div class="progress-bar"><span style="width:70%"></span></div>
+    </section>
+
+    <section>
+      <h2>Technologies</h2>
+      <span class="badge">HTML5</span>
+      <span class="badge">CSS3</span>
+      <span class="badge">JavaScript</span>
+      <span class="badge">TypeScript</span>
+      <span class="badge">React</span>
+      <span class="badge">Vue.js</span>
+      <span class="badge">Node.js</span>
+      <span class="badge">GraphQL</span>
+      <span class="badge">REST API</span>
+      <span class="badge">WebSockets</span>
+      <span class="badge">PWA</span>
+      <span class="badge">WebAssembly</span>
+      <span class="badge">Docker</span>
+      <span class="badge">Git</span>
+    </section>
+
+    <section>
+      <h2>Education</h2>
+      <h3>Ph.D. Computer Science</h3>
+      <p>MIT &bull; 2015<br><small>Scalable Real-Time Web Architectures</small></p>
+      <h3>M.Sc. Software Engineering</h3>
+      <p>Stanford University &bull; 2011</p>
+      <h3>B.Sc. Computer Science</h3>
+      <p>UC Berkeley &bull; 2009</p>
+    </section>
+
+    <section>
+      <h2>Office Hours</h2>
+      <table>
+        <thead><tr><th>Day</th><th>Time</th></tr></thead>
+        <tbody>
+          <tr><td>Monday</td><td>10:00–12:00</td></tr>
+          <tr><td>Wednesday</td><td>14:00–16:00</td></tr>
+          <tr><td>Friday</td><td>By appointment</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Quick Links</h2>
+      <ul>
+        <li><a href="#">Download CV (PDF)</a></li>
+        <li><a href="#">Google Scholar</a></li>
+        <li><a href="#">ResearchGate</a></li>
+        <li><a href="#">ORCID Profile</a></li>
+        <li><a href="#">Course Materials</a></li>
+      </ul>
+    </section>
+
+  </aside>
+
+</div>
+
+<!-- ========== FOOTER ========== -->
+<footer>
+  <p>&copy; 2026 Dr. Alex Morgan &bull; Department of Computer Science &bull; University of Technology</p>
+  <p>
+    <a href="mailto:[email]">[email]</a> &nbsp;|&nbsp;
+    <a href="#">Privacy Policy</a> &nbsp;|&nbsp;
+    <a href="#">Accessibility</a>
+  </p>
+  <small>Last updated: April 2025</small>
+</footer>
+
+</body>
+</html>

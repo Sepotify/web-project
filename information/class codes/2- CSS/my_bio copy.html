@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Ali Abrishami</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: "Times New Roman", serif;
+            background: #f4f6f9;
+            color: #222;
+        }
+
+        header {
+            background-color: #1a3a5c;
+            color: white;
+            padding: 30px;
+
+            display: flex;
+            align-items: center;
+        }
+
+        header div {
+            padding-left: 20px;
+        }
+
+        header>p {
+            font-size: 1rem;
+        }
+
+        #header-links>a {
+            color: #90caf9;
+        }
+
+        nav {
+            background: #14304d;
+            padding: 10px;
+        }
+
+        nav a {
+            color: #cde;
+            margin: 10px 20px;
+        }
+
+        nav a:hover {
+            color: #1a6fc4;
+        }
+
+        main {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+
+            max-width: 1000px;
+            margin: 2rem auto;
+
+        }
+
+        section {
+            background-color: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+
+            padding: 20px;
+            margin: 20px 0;
+
+            border: 20px;
+        }
+
+        h1 {
+            font-size: 2rem;
+        }
+    </style>
+
+    <link rel="stylesheet" href="index.css" />
+</head>
+
+<body>
+    <header>
+        <img style="border-radius: 50%; border: 3px solid #fff;" src="flower.jpg" width="110px" height="110px" />
+
+        <div>
+            <h1>Dr. Alex Morgan</h1>
+
+            <p>
+                Associate Professor • Department of Computer Science
+            </p>
+            <p>
+                <strong>University of Technology</strong> • Web Systems & Internet Engineering Lab
+            </p>
+
+            <p id="header-links">
+                ✉ [<a href="abrishami@ce.sharif.edu">email</a>] |
+                📞 [<a href="09123456789">phone_number</a>] |
+                <a href="https://github.com">My Github</a> |
+                <a href="https://linkedin.com">LinkedIn</a>
+            </p>
+        </div>
+    </header>
+
+    <nav>
+
+        <a href="#About"> About</a>
+        <a href="#Research"> Research</a>
+        <a href="#Publications"> Publications</a>
+        <a href="#Courses"> Courses</a>
+        <a href="#Contact"> Contact</a>
+
+    </nav>
+
+
+    <main>
+        <section id="About">
+            <h2> About Me</h2>
+            <hr>
+            <p>
+                I am an Associate Professor specializing in <strong> Web Programming</strong>, Full-Stack Development,
+                and Progressive Web
+                Applications. My work bridges academic research and real-world software engineering.
+            </p>
+            <blockquote> "The web is not just a technology — it is the most powerful platform for human communication
+                ever
+                built."
+            </blockquote>
+            <p>
+                I received my Ph.D. in Computer Science from MIT, with a dissertation on Scalable Architectures for
+                Real-Time Web Applications. Before joining academia, I worked as a senior engineer at several tech
+                companies, building large-scale distributed web systems.
+            </p>
+        </section>
+
+        <section id="Research">
+            <h2> Research Interests</h2>
+            <ul>
+
+                <li> Progressive Web Apps (PWA) & Service Workers</li>
+                <li> WebAssembly and browser-native performance</li>
+                <li> RESTful & GraphQL API design</li>
+                <li> Web security: XSS, CSRF, OAuth 2.0</li>
+                <li> Accessibility and inclusive web design</li>
+                <li> Real-time systems with WebSockets</li>
+
+            </ul>
+
+            <h3>Ongoing Projects</h3>
+            <ol>
+
+                <li> EduWeb – An adaptive LMS built entirely on web standards</li>
+                <li> SecureForm – A library for client-side form validation & sanitization</li>
+                <li> WebPerf Monitor – Real-time browser performance analytics dashboard</li>
+            </ol>
+
+        </section>
+
+        <section id="Publications">
+            <h2>Selected Publications</h2>
+            <h3> Publication Summary</h3>
+            <table>
+                <thead>
+                    Year Title (short) Venue Citations
+                </thead>
+                <tbody>
+                    2025 WebAssembly in SPAs IEEE TWE 12
+                    2024 Securing REST APIs ACM WWW 34
+                    2023 Progressive Enhancement JWT 58
+                    2022 PWA Performance Metrics USENIX Web 91
+                    Total Citations 195
+                </tbody>
+            </table>
+
+
+        </section>
+    </main>
+
+    <footer>
+        © 2026 Dr. Alex Morgan • Department of Computer Science • University of Technology
+
+        [email] | Privacy Policy | Accessibility
+
+        Last updated: April 2025
+
+    </footer>
+</body>
+
+</html>
