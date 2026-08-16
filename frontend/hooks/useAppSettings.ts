@@ -1,31 +1,72 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { apiFetchSettings, apiUpdateSettings } from "@/lib/api/endpoints";
 import { getAppSettings, updateAppSettings } from "@/lib/storage";
-import type { AppSettings } from "@/types";
+import { useAuth } from "@/store/AuthContext";
+import type { AppSettings, NotificationType } from "@/types";
 
 export function useAppSettings() {
+  const { useApiAuth, isAuthenticated } = useAuth();
   const [settings, setSettings] = useState<AppSettings>(() => getAppSettings());
+  const [isLoading, setIsLoading] = useState(false);
 
-  const refresh = useCallback(() => {
+  const refresh = useCallback(async () => {
+    if (useApiAuth && isAuthenticated) {
+      setIsLoading(true);
+      try {
+        const data = await apiFetchSettings();
+        const next: AppSettings = {
+          language: data.language,
+          defaultVolume: data.default_volume,
+          notificationPreferences: data.notification_preferences,
+        };
+        updateAppSettings(next);
+        setSettings(next);
+      } catch {
+        setSettings(getAppSettings());
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
     setSettings(getAppSettings());
-  }, []);
+  }, [isAuthenticated, useApiAuth]);
 
   useEffect(() => {
-    refresh();
+    void refresh();
   }, [refresh]);
 
   const updateSettings = useCallback(
-    (
+    async (
       patch: Omit<Partial<AppSettings>, "notificationPreferences"> & {
-        notificationPreferences?: Partial<AppSettings["notificationPreferences"]>;
+        notificationPreferences?: Partial<Record<NotificationType, boolean>>;
       },
     ) => {
+      if (useApiAuth && isAuthenticated) {
+        const data = await apiUpdateSettings({
+          language: patch.language,
+          default_volume: patch.defaultVolume,
+          notification_preferences: patch.notificationPreferences,
+        });
+        const next: AppSettings = {
+          language: data.language,
+          defaultVolume: data.default_volume,
+          notificationPreferences: data.notification_preferences,
+        };
+        updateAppSettings(next);
+        setSettings(next);
+        return next;
+      }
+
       updateAppSettings(patch);
-      refresh();
+      const next = getAppSettings();
+      setSettings(next);
+      return next;
     },
-    [refresh],
+    [isAuthenticated, useApiAuth],
   );
 
-  return { settings, updateSettings, refresh };
+  return { settings, updateSettings, refresh, isLoading };
 }

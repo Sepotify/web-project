@@ -29,6 +29,26 @@ export default function ArtistPendingPage() {
       return;
     }
 
+    if (user.artistStatus === "approved") {
+      router.replace("/");
+      return;
+    }
+
+    if (user.artistStatus === "pending" || user.artistStatus === "rejected") {
+      setArtist({
+        id: "api-artist",
+        userId: user.id,
+        stageName: user.displayName,
+        portfolioUrl: undefined,
+        status: user.artistStatus,
+        isVerified: false,
+        totalListeners: 0,
+        totalStreams: 0,
+        createdAt: user.createdAt,
+      });
+      return;
+    }
+
     const artistProfile = getArtistByUserId(user.id);
     if (!artistProfile) {
       router.replace("/");
@@ -94,7 +114,7 @@ export default function ArtistPendingPage() {
               Go to home
             </Button>
           </Link>
-          <Button variant="ghost" className="flex-1" onClick={logout}>
+          <Button variant="ghost" className="flex-1" onClick={() => void logout()}>
             Sign out
           </Button>
         </div>

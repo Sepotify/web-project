@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTML Tags Reference</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; line-height: 1.7; color: #333; background: #f5f5f5; }
+    header { background: #2c3e50; color: white; padding: 2rem; text-align: center; }
+    nav { background: #34495e; padding: 1rem; text-align: center; }
+    nav a { color: #ecf0f1; margin: 0 1rem; text-decoration: none; font-weight: bold; }
+    nav a:hover { color: #3498db; }
+    main { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+    section { background: white; border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+    h2 { color: #2c3e50; border-left: 4px solid #3498db; padding-left: 0.75rem; margin-bottom: 1rem; }
+    h3 { color: #555; margin: 1rem 0 0.5rem; }
+    code { background: #eef; color: #c0392b; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+    pre { background: #2c3e50; color: #ecf0f1; padding: 1rem; border-radius: 6px; overflow-x: auto; margin: 0.5rem 0; font-size: 0.9em; }
+    .demo { background: #f9f9f9; border: 1px dashed #ccc; padding: 1rem; border-radius: 6px; margin-top: 0.5rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
+    th { background: #3498db; color: white; padding: 0.6rem; text-align: left; }
+    td { padding: 0.6rem; border-bottom: 1px solid #ddd; }
+    tr:hover { background: #f0f8ff; }
+    form input, form textarea, form select { width: 100%; padding: 0.5rem; margin: 0.3rem 0 0.8rem; border: 1px solid #ccc; border-radius: 4px; }
+    form button { background: #3498db; color: white; padding: 0.5rem 1.5rem; border: none; border-radius: 4px; cursor: pointer; }
+    form button:hover { background: #2980b9; }
+    footer { background: #2c3e50; color: #ecf0f1; text-align: center; padding: 1.5rem; margin-top: 2rem; }
+    .tag-badge { display: inline-block; background: #3498db; color: white; padding: 2px 8px; border-radius: 12px; font-size: 0.8em; margin: 2px; }
+  </style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header>
+  <h1>HTML Tags &amp; Elements</h1>
+  <p>A practical guide to the most important HTML tags</p>
+</header>
+
+<!-- ===== NAVIGATION ===== -->
+<nav>
+  <a href="#structure">Structure</a>
+  <a href="#text">Text</a>
+  <a href="#lists">Lists</a>
+  <a href="#links-media">Links &amp; Media</a>
+  <a href="#table">Table</a>
+  <a href="#form">Form</a>
+  <a href="#semantic">Semantic</a>
+</nav>
+
+<main>
+
+  <!-- ===== 1. PAGE STRUCTURE ===== -->
+  <section id="structure">
+    <h2>1. Page Structure Tags</h2>
+    <p>These tags form the skeleton of every HTML document.</p>
+    <pre>
+&lt;!DOCTYPE html&gt;        &lt;!-- Declares HTML5 --&gt;
+&lt;html lang="en"&gt;       &lt;!-- Root element --&gt;
+  &lt;head&gt;               &lt;!-- Metadata container --&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    &lt;title&gt;Page Title&lt;/title&gt;
+    &lt;link rel="stylesheet" href="style.css"&gt;
+    &lt;script src="app.js"&gt;&lt;/script&gt;
+  &lt;/head&gt;
+  &lt;body&gt;               &lt;!-- Visible content goes here --&gt;
+  &lt;/body&gt;
+&lt;/html&gt;</pre>
+  </section>
+
+  <!-- ===== 2. TEXT TAGS ===== -->
+  <section id="text">
+    <h2>2. Text Tags</h2>
+
+    <h3>Headings</h3>
+    <pre>&lt;h1&gt;Heading 1&lt;/h1&gt;  &lt;!-- Largest --&gt;
+&lt;h2&gt;Heading 2&lt;/h2&gt;
+&lt;h3&gt;Heading 3&lt;/h3&gt;
+&lt;h4&gt;Heading 4&lt;/h4&gt;
+&lt;h5&gt;Heading 5&lt;/h5&gt;
+&lt;h6&gt;Heading 6&lt;/h6&gt;  &lt;!-- Smallest --&gt;</pre>
+    <div class="demo">
+      <h1 style="font-size:1.8em">h1 - Main Title</h1>
+      <h2 style="font-size:1.4em">h2 - Section Title</h2>
+      <h3 style="font-size:1.1em">h3 - Subsection</h3>
+    </div>
+
+    <h3>Paragraph &amp; Inline Text</h3>
+    <pre>&lt;p&gt;A paragraph of text.&lt;/p&gt;
+&lt;strong&gt;Bold / important&lt;/strong&gt;
+&lt;em&gt;Italic / emphasis&lt;/em&gt;
+&lt;u&gt;Underlined&lt;/u&gt;
+&lt;s&gt;Strikethrough&lt;/s&gt;
+&lt;mark&gt;Highlighted&lt;/mark&gt;
+&lt;small&gt;Small text&lt;/small&gt;
+&lt;sup&gt;Superscript&lt;/sup&gt;  &lt;sub&gt;Subscript&lt;/sub&gt;
+&lt;br&gt;   &lt;!-- Line break --&gt;
+&lt;hr&gt;   &lt;!-- Horizontal rule --&gt;
+&lt;blockquote&gt;A quoted block&lt;/blockquote&gt;
+&lt;code&gt;inline code&lt;/code&gt;
+&lt;pre&gt;Preformatted text&lt;/pre&gt;</pre>
+    <div class="demo">
+      <p><strong>Bold</strong> | <em>Italic</em> | <u>Underline</u> | <s>Strike</s> | <mark>Highlight</mark> | <small>Small</small></p>
+      <p>H<sub>2</sub>O and x<sup>2</sup></p>
+      <blockquote style="border-left:3px solid #ccc; padding-left:1rem; color:#666">"This is a blockquote."</blockquote>
+    </div>
+  </section>
+
+  <!-- ===== 3. LISTS ===== -->
+  <section id="lists">
+    <h2>3. List Tags</h2>
+    <pre>&lt;!-- Unordered list --&gt;
+&lt;ul&gt;
+  &lt;li&gt;Item one&lt;/li&gt;
+  &lt;li&gt;Item two&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;!-- Ordered list --&gt;
+&lt;ol&gt;
+  &lt;li&gt;First&lt;/li&gt;
+  &lt;li&gt;Second&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;!-- Description list --&gt;
+&lt;dl&gt;
+  &lt;dt&gt;HTML&lt;/dt&gt;
+  &lt;dd&gt;HyperText Markup Language&lt;/dd&gt;
+&lt;/dl&gt;</pre>
+    <div class="demo" style="display:flex; gap:2rem; flex-wrap:wrap;">
+      <div>
+        <strong>Unordered:</strong>
+        <ul><li>HTML</li><li>CSS</li><li>JavaScript</li></ul>
+      </div>
+      <div>
+        <strong>Ordered:</strong>
+        <ol><li>Learn HTML</li><li>Learn CSS</li><li>Learn JS</li></ol>
+      </div>
+      <div>
+        <strong>Description:</strong>
+        <dl><dt><strong>HTML</strong></dt><dd>Markup language</dd></dl>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 4. LINKS & MEDIA ===== -->
+  <section id="links-media">
+    <h2>4. Links &amp; Media</h2>
+    <pre>&lt;!-- Anchor / Link --&gt;
+&lt;a href="https://example.com" target="_blank"&gt;Visit Example&lt;/a&gt;
+&lt;a href="mailto:[email]"&gt;Send Email&lt;/a&gt;
+&lt;a href="#section-id"&gt;Jump to section&lt;/a&gt;
+
+&lt;!-- Image --&gt;
+&lt;img src="photo.jpg" alt="Description" width="300"&gt;
+
+&lt;!-- Video --&gt;
+&lt;video src="video.mp4" controls width="400"&gt;&lt;/video&gt;
+
+&lt;!-- Audio --&gt;
+&lt;audio src="audio.mp3" controls&gt;&lt;/audio&gt;
+
+&lt;!-- Iframe --&gt;
+&lt;iframe src="https://example.com" width="600" height="400"&gt;&lt;/iframe&gt;</pre>
+    <div class="demo">
+      <a href="#" style="color:#3498db">A sample link</a> |
+      <img src="https://via.placeholder.com/80x40?text=IMG" alt="placeholder" style="vertical-align:middle; border-radius:4px;">
+    </div>
+  </section>
+
+  <!-- ===== 5. TABLE ===== -->
+  <section id="table">
+    <h2>5. Table Tags</h2>
+    <pre>&lt;table&gt;
+  &lt;thead&gt;
+    &lt;tr&gt;
+      &lt;th&gt;Name&lt;/th&gt;  &lt;th&gt;Age&lt;/th&gt;
+    &lt;/tr&gt;
+  &lt;/thead&gt;
+  &lt;tbody&gt;
+    &lt;tr&gt;
+      &lt;td&gt;Alice&lt;/td&gt;  &lt;td&gt;25&lt;/td&gt;
+    &lt;/tr&gt;
+  &lt;/tbody&gt;
+  &lt;tfoot&gt;
+    &lt;tr&gt;&lt;td colspan="2"&gt;Footer&lt;/td&gt;&lt;/tr&gt;
+  &lt;/tfoot&gt;
+&lt;/table&gt;</pre>
+    <div class="demo">
+      <table>
+        <thead><tr><th>Tag</th><th>Purpose</th><th>Type</th></tr></thead>
+        <tbody>
+          <tr><td><code>&lt;table&gt;</code></td><td>Table container</td><td>Block</td></tr>
+          <tr><td><code>&lt;tr&gt;</code></td><td>Table row</td><td>Block</td></tr>
+          <tr><td><code>&lt;th&gt;</code></td><td>Header cell</td><td>Inline</td></tr>
+          <tr><td><code>&lt;td&gt;</code></td><td>Data cell</td><td>Inline</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===== 6. FORM ===== -->
+  <section id="form">
+    <h2>6. Form Tags</h2>
+    <pre>&lt;form action="/submit" method="POST"&gt;
+  &lt;label for="name"&gt;Name:&lt;/label&gt;
+  &lt;input type="text" id="name" name="name" placeholder="Your name"&gt;
+
+  &lt;input type="email" placeholder="Email"&gt;
+  &lt;input type="password" placeholder="Password"&gt;
+  &lt;input type="number" min="0" max="100"&gt;
+  &lt;input type="date"&gt;
+  &lt;input type="checkbox"&gt; Remember me
+  &lt;input type="radio" name="gender" value="m"&gt; Male
+
+  &lt;select name="city"&gt;
+    &lt;option value="ny"&gt;New York&lt;/option&gt;
+    &lt;option value="la"&gt;Los Angeles&lt;/option&gt;
+  &lt;/select&gt;
+
+  &lt;textarea rows="4" placeholder="Message..."&gt;&lt;/textarea&gt;
+
+  &lt;button type="submit"&gt;Submit&lt;/button&gt;
+  &lt;input type="reset" value="Reset"&gt;
+&lt;/form&gt;</pre>
+    <div class="demo">
+      <form onsubmit="return false;">
+        <label for="demo-name">Name:</label>
+        <input type="text" id="demo-name" placeholder="Your name">
+        <label>Email:</label>
+        <input type="email" placeholder="[email]">
+        <label>Message:</label>
+        <textarea rows="3" placeholder="Write something..."></textarea>
+        <label>City:</label>
+        <select><option>New York</option><option>London</option></select>
+        <br><br>
+        <button type="submit">Submit</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- ===== 7. SEMANTIC TAGS ===== -->
+  <section id="semantic">
+    <h2>7. Semantic &amp; Layout Tags</h2>
+    <pre>&lt;header&gt;   &lt;!-- Page or section header --&gt;
+&lt;nav&gt;      &lt;!-- Navigation links --&gt;
+&lt;main&gt;     &lt;!-- Main content area --&gt;
+&lt;section&gt;  &lt;!-- Thematic section --&gt;
+&lt;article&gt;  &lt;!-- Self-contained content --&gt;
+&lt;aside&gt;    &lt;!-- Sidebar / related content --&gt;
+&lt;footer&gt;   &lt;!-- Page or section footer --&gt;
+&lt;figure&gt;   &lt;!-- Image with caption --&gt;
+  &lt;img src="..." alt="..."&gt;
+  &lt;figcaption&gt;Caption here&lt;/figcaption&gt;
+&lt;/figure&gt;
+&lt;div&gt;      &lt;!-- Generic block container --&gt;
+&lt;span&gt;     &lt;!-- Generic inline container --&gt;</pre>
+    <div class="demo">
+      <p>Semantic tags give meaning to your layout. Search engines and screen readers use them to understand page structure.</p>
+      <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:0.5rem;">
+        <span class="tag-badge">header</span>
+        <span class="tag-badge">nav</span>
+        <span class="tag-badge">main</span>
+        <span class="tag-badge">section</span>
+        <span class="tag-badge">article</span>
+        <span class="tag-badge">aside</span>
+        <span class="tag-badge">footer</span>
+        <span class="tag-badge">figure</span>
+        <span class="tag-badge">div</span>
+        <span class="tag-badge">span</span>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer>
+  <p>HTML Reference Page &mdash; Learn by reading and experimenting.</p>
+  <small>Save this file as <code>index.html</code> and open it in any browser.</small>
+</footer>
+
+</body>
+</html>

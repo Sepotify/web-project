@@ -13,24 +13,17 @@ import { SupportTicketForm } from "@/components/settings/SupportTicketForm";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { useAppSettings } from "@/hooks/useAppSettings";
-import {
-  getUserNotificationPreferences,
-  updateUserNotificationPreference,
-} from "@/lib/notification-preferences";
 import { deleteUserAccount } from "@/lib/storage";
 import { useAuth } from "@/store/AuthContext";
 import type { NotificationType } from "@/types";
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { user, isAuthenticated, isLoading, logout, refreshUser } = useAuth();
-  const { settings, updateSettings } = useAppSettings();
+  const { user, isAuthenticated, isLoading, logout, useApiAuth } = useAuth();
+  const { settings, updateSettings, isLoading: settingsLoading } = useAppSettings();
   const { showToast } = useToast();
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [notificationPreferences, setNotificationPreferences] = useState(() =>
-    user ? getUserNotificationPreferences(user.id) : null,
-  );
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -38,36 +31,68 @@ export default function SettingsPage() {
     }
   }, [isAuthenticated, isLoading, router]);
 
-  useEffect(() => {
-    if (user) {
-      setNotificationPreferences(getUserNotificationPreferences(user.id));
+  async function handleNotificationChange(type: NotificationType, enabled: boolean) {
+    try {
+      await updateSettings({
+        notificationPreferences: { [type]: enabled },
+      });
+      showToast("Notification preference updated.", "success");
+    } catch (error) {
+      showToast(
+        error instanceof Error ? error.message : "Could not update preference.",
+        "error",
+      );
     }
-  }, [user]);
-
-  function handleNotificationChange(type: NotificationType, enabled: boolean) {
-    if (!user) return;
-
-    updateUserNotificationPreference(user.id, type, enabled);
-    setNotificationPreferences(getUserNotificationPreferences(user.id));
-    refreshUser();
-    showToast("Notification preference updated.", "success");
   }
 
-  function handleLanguageChange(language: typeof settings.language) {
-    updateSettings({ language });
-    document.documentElement.lang = language;
-    document.documentElement.dir = language === "fa" ? "rtl" : "ltr";
-    showToast("Language preference saved.", "success");
+  async function handleLanguageChange(language: typeof settings.language) {
+    try {
+      await updateSettings({ language });
+      document.documentElement.lang = language;
+      document.documentElement.dir = language === "fa" ? "rtl" : "ltr";
+      showToast("Language preference saved.", "success");
+    } catch (error) {
+      showToast(
+        error instanceof Error ? error.message : "Could not save language.",
+        "error",
+      );
+    }
   }
 
-  function handleVolumeChange(defaultVolume: number) {
-    updateSettings({ defaultVolume });
+  async function handleVolumeChange(defaultVolume: number) {
+    try {
+      await updateSettings({ defaultVolume });
+    } catch (error) {
+      showToast(
+        error instanceof Error ? error.message : "Could not save volume.",
+        "error",
+      );
+    }
   }
 
-  function handleDeleteAccount() {
+  async function handleDeleteAccount() {
     if (!user) return;
 
     setIsDeleting(true);
+
+    if (useApiAuth) {
+      // Account delete API exists on /users/me/ but full wipe of related data
+      // is still Phase 2. For now sign out after local cleanup attempt.
+      try {
+        const { apiRequest } = await import("@/lib/api/client");
+        await apiRequest("/users/me/", { method: "DELETE" });
+      } catch {
+        setIsDeleting(false);
+        showToast("Failed to delete account on server.", "error");
+        return;
+      }
+      await logout();
+      setIsDeleting(false);
+      showToast("Your account has been deactivated.", "success");
+      router.replace("/login");
+      return;
+    }
+
     const success = deleteUserAccount(user.id);
     setIsDeleting(false);
 
@@ -76,12 +101,12 @@ export default function SettingsPage() {
       return;
     }
 
-    logout();
+    await logout();
     showToast("Your account has been deleted.", "success");
     router.replace("/login");
   }
 
-  if (isLoading || !user || !notificationPreferences) {
+  if (isLoading || settingsLoading || !user) {
     return (
       <AppShell>
         <div className="flex min-h-[40vh] items-center justify-center">
@@ -98,6 +123,7 @@ export default function SettingsPage() {
           <h1 className="text-2xl font-bold text-text-primary sm:text-3xl">Settings</h1>
           <p className="mt-1 text-sm text-text-secondary">
             Manage notifications, language, sound, and your account.
+            {useApiAuth ? " Preferences sync to the server." : ""}
           </p>
         </div>
 
@@ -114,8 +140,8 @@ export default function SettingsPage() {
         >
           <NotificationSettings
             role={user.role}
-            preferences={notificationPreferences}
-            onChange={handleNotificationChange}
+            preferences={settings.notificationPreferences}
+            onChange={(type, enabled) => void handleNotificationChange(type, enabled)}
           />
         </SettingsSection>
 
@@ -139,7 +165,7 @@ export default function SettingsPage() {
         >
           <LanguageSettings
             language={settings.language}
-            onChange={handleLanguageChange}
+            onChange={(language) => void handleLanguageChange(language)}
           />
         </SettingsSection>
 
@@ -149,7 +175,7 @@ export default function SettingsPage() {
         >
           <SoundSettings
             defaultVolume={settings.defaultVolume}
-            onChange={handleVolumeChange}
+            onChange={(volume) => void handleVolumeChange(volume)}
           />
         </SettingsSection>
 
@@ -178,7 +204,7 @@ export default function SettingsPage() {
         isOpen={isDeleteOpen}
         email={user.email}
         onClose={() => setIsDeleteOpen(false)}
-        onConfirm={handleDeleteAccount}
+        onConfirm={() => void handleDeleteAccount()}
         isDeleting={isDeleting}
       />
     </AppShell>

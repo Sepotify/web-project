@@ -22,6 +22,7 @@ export interface User {
   followingArtistIds: string[];
   dailyStreamCount: number;
   notificationPreferences?: Partial<Record<NotificationType, boolean>>;
+  artistStatus?: ArtistStatus;
   createdAt: string;
 }
 

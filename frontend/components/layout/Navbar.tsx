@@ -34,7 +34,7 @@ export function Navbar() {
                 <p className="text-xs text-text-muted">{roleLabels[user.role]}</p>
               </div>
             </Link>
-            <Button variant="ghost" size="sm" onClick={logout}>
+            <Button variant="ghost" size="sm" onClick={() => void logout()}>
               Sign out
             </Button>
           </>

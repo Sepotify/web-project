@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Minimal CSS Grid Layout</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+    }
+
+    .grid-container {
+      display: grid;
+      grid-template-areas:
+        "header header"
+        "sidebar content"
+        "footer footer";
+      grid-template-columns: 200px 1fr;
+      grid-template-rows: 60px 1fr 40px;
+      height: 100vh;
+    }
+
+    header {
+      grid-area: header;
+      background: steelblue;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    aside {
+      grid-area: sidebar;
+      background: lightgray;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    main {
+      grid-area: content;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-left: 2px solid #ccc;
+    }
+
+    footer {
+      grid-area: footer;
+      background: #333;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="grid-container">
+    <header>Header</header>
+    <aside>Sidebar</aside>
+    <main>Content</main>
+    <footer>Footer</footer>
+  </div>
+</body>
+
+</html>
