@@ -5,6 +5,7 @@ import {
   getPlaylistsByUser,
   updatePlaylist,
 } from "@/lib/storage";
+import { createId } from "@/lib/utils";
 import { validateRequired } from "@/lib/validation";
 import type { Playlist, SubscriptionTier, User } from "@/types";
 
@@ -95,7 +96,7 @@ export function createPlaylist(user: User, name: string): PlaylistActionResult {
 
   const now = new Date().toISOString();
   const playlist: Playlist = {
-    id: crypto.randomUUID(),
+    id: createId(),
     userId: user.id,
     name: name.trim(),
     songIds: [],

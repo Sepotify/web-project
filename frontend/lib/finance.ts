@@ -12,6 +12,7 @@ import {
   getArtists,
   updateArtistSettlement,
 } from "@/lib/storage";
+import { createId } from "@/lib/utils";
 import type { ArtistSettlement, UserRole } from "@/types";
 
 export interface SettlementAuditRow {
@@ -42,7 +43,7 @@ export function syncMonthlySettlements(monthKey = getCurrentMonthKey()): void {
     if (existingArtistIds.has(artist.id)) continue;
 
     addArtistSettlement({
-      id: crypto.randomUUID(),
+      id: createId(),
       artistId: artist.id,
       monthKey,
       uniqueListeners: artist.totalListeners,

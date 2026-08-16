@@ -17,6 +17,7 @@ import {
   getUserById,
   updateTicket,
 } from "@/lib/storage";
+import { createId } from "@/lib/utils";
 import type { Ticket, TicketMessage, TicketStatus, User, UserRole } from "@/types";
 
 export interface TicketSummary {
@@ -189,7 +190,7 @@ export function replyToTicket(
   }
 
   const message: TicketMessage = {
-    id: crypto.randomUUID(),
+    id: createId(),
     senderId,
     senderRole,
     content: trimmed,

@@ -6,6 +6,7 @@ import {
   notifyArtistMonthlyEarnings,
   notifyStaffOfNewTicket,
 } from "@/lib/notification-events";
+import { createId } from "@/lib/utils";
 
 const EARNINGS_PER_STREAM = 0.002;
 
@@ -56,7 +57,7 @@ export function createSupportTicket(
 
   const now = new Date().toISOString();
   const message: TicketMessage = {
-    id: crypto.randomUUID(),
+    id: createId(),
     senderId: userId,
     senderRole: user.role,
     content: trimmedContent,
@@ -64,7 +65,7 @@ export function createSupportTicket(
   };
 
   const ticket: Ticket = {
-    id: crypto.randomUUID(),
+    id: createId(),
     userId,
     subject: trimmedSubject,
     status: "open",

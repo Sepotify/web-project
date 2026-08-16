@@ -12,6 +12,7 @@ import {
   mapApiSong,
   resolveFeaturedArtistIds,
 } from "@/lib/catalog";
+import { createId } from "@/lib/utils";
 import { validateRequired } from "@/lib/validation";
 import type { Album, Song } from "@/types";
 
@@ -122,7 +123,7 @@ async function buildSongFromTrack(
   ]);
 
   return {
-    id: crypto.randomUUID(),
+    id: createId(),
     title: track.title.trim(),
     artistId: options.artistId,
     albumId: options.albumId,
@@ -244,7 +245,7 @@ export async function publishRelease(
       return { success: true, song };
     }
 
-    const albumId = crypto.randomUUID();
+    const albumId = createId();
     const songIds: string[] = [];
 
     for (const track of input.tracks) {

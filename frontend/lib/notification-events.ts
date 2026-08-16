@@ -6,6 +6,7 @@ import {
   getUserById,
   getUsers,
 } from "@/lib/storage";
+import { createId } from "@/lib/utils";
 import type { Artist, Notification, NotificationType, Ticket } from "@/types";
 
 type NotificationInput = Omit<Notification, "id" | "createdAt" | "isRead"> & {
@@ -18,7 +19,7 @@ function createNotification(input: NotificationInput): Notification | null {
   }
 
   const notification: Notification = {
-    id: input.id ?? crypto.randomUUID(),
+    id: input.id ?? createId(),
     userId: input.userId,
     type: input.type,
     title: input.title,

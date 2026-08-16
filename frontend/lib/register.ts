@@ -15,6 +15,7 @@ import {
   validateUniqueEmail,
 } from "@/lib/validation";
 import { notifyStaffOfArtistVerificationRequest } from "@/lib/notification-events";
+import { createId } from "@/lib/utils";
 import type { Artist, Gender, User } from "@/types";
 
 export interface RegisterListenerInput {
@@ -160,7 +161,7 @@ export function registerListener(input: RegisterListenerInput): RegisterResult {
   }
 
   const now = new Date().toISOString();
-  const userId = crypto.randomUUID();
+  const userId = createId();
 
   const user: User = {
     id: userId,
@@ -181,7 +182,7 @@ export function registerListener(input: RegisterListenerInput): RegisterResult {
 
   addUser(user);
   addSubscription({
-    id: crypto.randomUUID(),
+    id: createId(),
     userId,
     tier: "basic",
     startDate: now,
@@ -198,7 +199,7 @@ export function registerArtist(input: RegisterArtistInput): RegisterResult {
   }
 
   const now = new Date().toISOString();
-  const userId = crypto.randomUUID();
+  const userId = createId();
   const stageName = input.stageName.trim();
 
   const user: User = {
@@ -217,7 +218,7 @@ export function registerArtist(input: RegisterArtistInput): RegisterResult {
   };
 
   const artist: Artist = {
-    id: crypto.randomUUID(),
+    id: createId(),
     userId,
     stageName,
     portfolioUrl: input.portfolio.trim(),
@@ -232,7 +233,7 @@ export function registerArtist(input: RegisterArtistInput): RegisterResult {
   addArtist(artist);
   notifyStaffOfArtistVerificationRequest(artist);
   addSubscription({
-    id: crypto.randomUUID(),
+    id: createId(),
     userId,
     tier: "basic",
     startDate: now,

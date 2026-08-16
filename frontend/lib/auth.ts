@@ -3,6 +3,7 @@ import {
   getArtistByUserId,
   getUserByEmail,
 } from "@/lib/storage";
+import { createId } from "@/lib/utils";
 import type { User, UserRole } from "@/types";
 
 export interface LoginResult {
@@ -93,10 +94,10 @@ export function requestPasswordReset(email: string): PasswordResetResult {
   }
 
   const now = Date.now();
-  const token = crypto.randomUUID();
+  const token = createId();
 
   addPasswordResetRequest({
-    id: crypto.randomUUID(),
+    id: createId(),
     userId: user.id,
     email: normalizedEmail,
     token,

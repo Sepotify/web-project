@@ -3,6 +3,7 @@ import {
   getRecentPlaylistPlays,
   setRecentPlaylistPlays,
 } from "@/lib/storage";
+import { createId } from "@/lib/utils";
 import type { Playlist, RecentPlaylistPlay } from "@/types";
 
 const MAX_STORED_PLAYS_PER_USER = 20;
@@ -24,7 +25,7 @@ export function recordPlaylistPlay(userId: string, playlistId: string): void {
     .slice(0, MAX_STORED_PLAYS_PER_USER - 1);
 
   const nextEntry: RecentPlaylistPlay = {
-    id: crypto.randomUUID(),
+    id: createId(),
     userId,
     playlistId,
     playedAt: now,
