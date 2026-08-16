@@ -134,6 +134,8 @@ SPECTACULAR_SETTINGS = {
         "notifications, and subscription access skeleton. "
         "Person 2: albums, songs, playlists, catalog search, home feed, "
         "streaming, and downloads. "
+        "Person 3: tickets, reports, and ZarinPal sandbox payments "
+        "(POST /api/payments/init/, POST /api/payments/verify/). "
         "Upload audio as multipart/form-data to POST /api/me/songs/ "
         "(MP3/WAV/FLAC, max 8 MB). See music/README.md."
     ),
@@ -146,3 +148,9 @@ ADMIN_EMAIL = env("ADMIN_EMAIL", default="admin@example.com")
 ADMIN_PASSWORD = env("ADMIN_PASSWORD", default="AdminPass123!")
 SUPPORT_EMAIL = env("SUPPORT_EMAIL", default="support@example.com")
 SUPPORT_PASSWORD = env("SUPPORT_PASSWORD", default="SupportPass123!")
+
+FRONTEND_ORIGIN = env("FRONTEND_ORIGIN", default="http://localhost:3000")
+PAYMENT_CALLBACK_URL = env(
+    "PAYMENT_CALLBACK_URL",
+    default=f"{str(FRONTEND_ORIGIN).rstrip('/')}/payment/callback",
+)

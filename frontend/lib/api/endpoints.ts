@@ -427,3 +427,48 @@ export async function apiFetchHomeFeed(): Promise<ApiHomeFeed> {
 export async function apiRecordSongStream(id: string): Promise<ApiSong> {
   return apiRequest<ApiSong>(`/songs/${id}/stream/`, { method: "POST" });
 }
+
+export interface ApiPaymentInit {
+  id: number;
+  authority: string;
+  payment_url: string;
+  amount: number;
+  tier: "silver" | "gold";
+  duration_months: number;
+}
+
+export interface ApiPaymentVerify {
+  id: number;
+  status: "pending" | "success" | "failed";
+  tier: "silver" | "gold";
+  duration_months: number;
+  amount: number;
+  authority: string;
+  ref_id: string;
+  already_verified: boolean;
+  end_date: string | null;
+}
+
+export async function apiInitPayment(input: {
+  tier: "silver" | "gold";
+  duration_months: number;
+}): Promise<ApiPaymentInit> {
+  return apiRequest<ApiPaymentInit>("/payments/init/", {
+    method: "POST",
+    body: input,
+  });
+}
+
+export async function apiVerifyPayment(input: {
+  authority: string;
+  status?: string;
+}): Promise<ApiPaymentVerify> {
+  return apiRequest<ApiPaymentVerify>("/payments/verify/", {
+    method: "POST",
+    auth: false,
+    body: {
+      authority: input.authority,
+      status: input.status ?? "OK",
+    },
+  });
+}

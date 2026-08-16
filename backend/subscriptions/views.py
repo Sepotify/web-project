@@ -7,6 +7,12 @@ from rest_framework.views import APIView
 from accounts.models import User
 from accounts.permissions import IsAdmin
 from subscriptions.models import PricingConfig, Subscription, SubscriptionTier
+from subscriptions.payment_services import (
+    ALLOWED_DURATIONS,
+    PaymentError,
+    init_payment,
+    verify_checkout,
+)
 from subscriptions.services import (
     can_download,
     can_early_access,
@@ -120,3 +126,84 @@ class MySubscriptionView(APIView):
                 },
             }
         )
+
+
+class PaymentInitSerializer(serializers.Serializer):
+    tier = serializers.ChoiceField(
+        choices=[
+            (SubscriptionTier.SILVER, "Silver"),
+            (SubscriptionTier.GOLD, "Gold"),
+        ]
+    )
+    duration_months = serializers.IntegerField()
+
+    def validate_duration_months(self, value):
+        if value not in ALLOWED_DURATIONS:
+            raise serializers.ValidationError("Duration must be 1, 3, 6, or 12 months.")
+        return value
+
+
+class PaymentVerifySerializer(serializers.Serializer):
+    authority = serializers.CharField(max_length=64)
+    status = serializers.CharField(required=False, allow_blank=True, default="OK")
+
+
+class PaymentInitView(APIView):
+    """POST /api/payments/init/ — create a ZarinPal sandbox checkout session."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = PaymentInitSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            data = init_payment(
+                request.user,
+                tier=serializer.validated_data["tier"],
+                duration_months=serializer.validated_data["duration_months"],
+            )
+        except PaymentError as exc:
+            return Response({"detail": str(exc)}, status=exc.status_code)
+        return Response(data, status=status.HTTP_201_CREATED)
+
+
+class PaymentVerifyView(APIView):
+    """
+    POST /api/payments/verify/ and GET /api/payments/callback/
+
+    ZarinPal redirects the browser here without our JWT, so these endpoints
+    are public and identified by the stored authority.
+    """
+
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = PaymentVerifySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return self._verify(
+            serializer.validated_data["authority"],
+            serializer.validated_data.get("status") or "OK",
+        )
+
+    def get(self, request):
+        authority = request.query_params.get("Authority") or request.query_params.get(
+            "authority"
+        )
+        gateway_status = request.query_params.get("Status") or request.query_params.get(
+            "status"
+        )
+        serializer = PaymentVerifySerializer(
+            data={"authority": authority or "", "status": gateway_status or "OK"}
+        )
+        serializer.is_valid(raise_exception=True)
+        return self._verify(
+            serializer.validated_data["authority"],
+            serializer.validated_data.get("status") or "OK",
+        )
+
+    def _verify(self, authority: str, gateway_status: str):
+        try:
+            data = verify_checkout(authority=authority, gateway_status=gateway_status)
+        except PaymentError as exc:
+            return Response({"detail": str(exc)}, status=exc.status_code)
+        return Response(data)

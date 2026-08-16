@@ -4,6 +4,8 @@ from subscriptions.views import (
     AdminPricingView,
     AdminSetUserSubscriptionView,
     MySubscriptionView,
+    PaymentInitView,
+    PaymentVerifyView,
     PricingView,
 )
 
@@ -16,4 +18,7 @@ urlpatterns = [
         name="admin-set-subscription",
     ),
     path("users/me/subscription/", MySubscriptionView.as_view(), name="me-subscription"),
+    path("payments/init/", PaymentInitView.as_view(), name="payments-init"),
+    path("payments/verify/", PaymentVerifyView.as_view(), name="payments-verify"),
+    path("payments/callback/", PaymentVerifyView.as_view(), name="payments-callback"),
 ]

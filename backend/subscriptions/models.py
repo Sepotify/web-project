@@ -70,3 +70,42 @@ class Subscription(models.Model):
         if self.end_date and self.end_date < timezone.now():
             return False
         return True
+
+
+class PaymentStatus(models.TextChoices):
+    PENDING = "pending", "Pending"
+    SUCCESS = "success", "Success"
+    FAILED = "failed", "Failed"
+
+
+class PaymentTransaction(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="payments",
+    )
+    tier = models.CharField(
+        max_length=20,
+        choices=[
+            (SubscriptionTier.SILVER, "Silver"),
+            (SubscriptionTier.GOLD, "Gold"),
+        ],
+    )
+    duration_months = models.PositiveSmallIntegerField()
+    amount = models.PositiveIntegerField(help_text="Total amount sent to the gateway.")
+    merchant_id = models.UUIDField()
+    authority = models.CharField(max_length=64, unique=True, blank=True, null=True)
+    ref_id = models.CharField(max_length=64, blank=True, default="")
+    status = models.CharField(
+        max_length=20,
+        choices=PaymentStatus.choices,
+        default=PaymentStatus.PENDING,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    verified_at = models.DateTimeField(blank=True, null=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.user_id}:{self.tier} x{self.duration_months} ({self.status})"

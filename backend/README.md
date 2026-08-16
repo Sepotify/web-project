@@ -89,9 +89,14 @@ Frontend uses `NEXT_PUBLIC_API_URL=http://127.0.0.1:8000/api`.
 - `DELETE /api/notifications/{id}/`
 - `POST /api/notifications/mark-all-read/`
 
-### Pricing
+### Pricing / payments
 - `GET /api/pricing/`
 - `PATCH /api/admin/pricing/` (admin)
+- `POST /api/payments/init/` `{ "tier": "silver"|"gold", "duration_months": 1|3|6|12 }`
+- `POST /api/payments/verify/` `{ "authority": "...", "status": "OK"|"NOK" }`
+- `GET /api/payments/callback/?Authority=...&Status=OK` (ZarinPal browser redirect)
+
+ZarinPal sandbox has **no auth headers**. Each checkout uses a random `merchant_id` UUID and `amount = monthly price × duration`. After `init`, open `https://sandbox.zarinpal.com/pg/StartPay/{authority}`.
 
 ### Tickets (Person 3)
 - `GET/POST /api/tickets/`
@@ -120,4 +125,4 @@ Frontend uses `NEXT_PUBLIC_API_URL=http://127.0.0.1:8000/api`.
 python manage.py test
 ```
 
-Expect 28+ tests across accounts, notifications, music, tickets, and reports.
+Expect 31+ tests across accounts, notifications, music, tickets, reports, and payments.
