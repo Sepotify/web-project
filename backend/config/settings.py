@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "subscriptions.apps.SubscriptionsConfig",
     "tickets.apps.TicketsConfig",
     "catalog.apps.CatalogConfig",
+    "reports.apps.ReportsConfig",
 ]
 
 MIDDLEWARE = [
