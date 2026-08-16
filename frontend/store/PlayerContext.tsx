@@ -1,7 +1,7 @@
 "use client";
 
 import { useAudioEngine } from "@/hooks/useAudioEngine";
-import { getPlayableMediaUrl, getPlayableSongAudioUrl } from "@/lib/audio";
+import { getPlayableMediaUrl, getSongAudioUrl } from "@/lib/audio";
 import {
   accentFromSeed,
   extractDominantColor,
@@ -165,7 +165,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     if (!nextSong) return;
 
     const started = engine.beginCrossfade(
-      getPlayableSongAudioUrl(nextSong),
+      getSongAudioUrl(nextSong),
       volumeRef.current,
       remaining,
       qualityRef.current,
@@ -221,8 +221,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
       setCurrentTime(0);
       setDuration(song.durationSeconds);
 
-      const url = getPlayableSongAudioUrl(song);
-      audio.loadTrack(url, volumeRef.current, autoplay, qualityRef.current);
+      audio.loadTrack(getSongAudioUrl(song), volumeRef.current, autoplay, qualityRef.current);
       setIsPlaying(autoplay);
 
       if (autoplay) {

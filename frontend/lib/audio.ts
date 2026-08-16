@@ -37,7 +37,7 @@ export function canProxyMediaUrl(rawUrl: string): boolean {
   }
 }
 
-/** Same-origin wrapper so Web Audio / canvas can read cross-origin media. */
+/** Same-origin wrapper so canvas can read cover art. Do not use this for playback. */
 export function getPlayableMediaUrl(rawUrl: string): string {
   if (!rawUrl || typeof window === "undefined") return rawUrl;
 
@@ -49,8 +49,4 @@ export function getPlayableMediaUrl(rawUrl: string): string {
   } catch {
     return rawUrl;
   }
-}
-
-export function getPlayableSongAudioUrl(song: Song): string {
-  return getPlayableMediaUrl(getSongAudioUrl(song));
 }

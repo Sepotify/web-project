@@ -64,6 +64,10 @@ export async function attachQualityGraph(howl: Howl, quality: AudioQuality = cur
     return true;
   }
 
+  // Keep default Howler HTML5 output for high quality. MediaElementSource
+  // cannot be undone and silences playback if the AudioContext is suspended.
+  if (quality === "high") return false;
+
   const ctx = getQualityContext();
   if (!ctx) return false;
 

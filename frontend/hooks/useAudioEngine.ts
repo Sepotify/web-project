@@ -27,6 +27,7 @@ export function useAudioEngine({
 }: UseAudioEngineOptions) {
   const howlRef = useRef<Howl | null>(null);
   const incomingRef = useRef<Howl | null>(null);
+  const sourceUrlRef = useRef("");
   const progressFrameRef = useRef<number | null>(null);
   const userVolumeRef = useRef(1);
   const qualityRef = useRef<AudioQuality>("high");
@@ -151,21 +152,24 @@ export function useAudioEngine({
         volume,
         onend: () => handleHowlEnd(howl),
         onload: () => {
-          void attachQualityGraph(howl, qualityRef.current);
-          if (typeof options.startAt === "number" && options.startAt > 0) {
-            howl.seek(options.startAt);
-          }
-          onProgressRef.current(
-            typeof options.startAt === "number" ? options.startAt : 0,
-            howl.duration(),
-          );
-          if (options.autoplay) {
-            howl.play();
-            startProgressLoop();
-          }
+          void (async () => {
+            if (qualityRef.current === "low") {
+              await attachQualityGraph(howl, "low");
+            }
+            if (typeof options.startAt === "number" && options.startAt > 0) {
+              howl.seek(options.startAt);
+            }
+            onProgressRef.current(
+              typeof options.startAt === "number" ? options.startAt : 0,
+              howl.duration(),
+            );
+            if (options.autoplay) {
+              howl.play();
+              startProgressLoop();
+            }
+          })();
         },
         onplay: () => {
-          void attachQualityGraph(howl, qualityRef.current);
           startProgressLoop();
         },
         onpause: () => {
@@ -208,6 +212,7 @@ export function useAudioEngine({
     ) => {
       userVolumeRef.current = trackVolume;
       qualityRef.current = quality;
+      sourceUrlRef.current = url;
       setActivePlaybackQuality(quality);
       unload();
 
@@ -281,17 +286,43 @@ export function useAudioEngine({
     [applyCrossfadeVolumes],
   );
 
-  const setQuality = useCallback((quality: AudioQuality, trackVolume: number) => {
-    qualityRef.current = quality;
-    userVolumeRef.current = trackVolume;
-    setActivePlaybackQuality(quality);
-    if (howlRef.current) void attachQualityGraph(howlRef.current, quality);
-    if (incomingRef.current) void attachQualityGraph(incomingRef.current, quality);
-  }, []);
+  const setQuality = useCallback(
+    (quality: AudioQuality, trackVolume: number) => {
+      userVolumeRef.current = trackVolume;
+      if (qualityRef.current === quality) {
+        setActivePlaybackQuality(quality);
+        return;
+      }
+
+      qualityRef.current = quality;
+      setActivePlaybackQuality(quality);
+
+      const howl = howlRef.current;
+      if (!howl || !sourceUrlRef.current) return;
+
+      const wasPlaying = howl.playing() || Boolean(incomingRef.current?.playing());
+      const currentTime = howl.seek() as number;
+      loadTrack(sourceUrlRef.current, trackVolume, wasPlaying, quality, currentTime);
+    },
+    [loadTrack],
+  );
 
   const isCrossfading = useCallback(() => crossfadingRef.current, []);
 
-  useEffect(() => unload, [unload]);
+  useEffect(
+    () => () => {
+      stopProgressLoop();
+      if (incomingRef.current) {
+        incomingRef.current.unload();
+        incomingRef.current = null;
+      }
+      if (howlRef.current) {
+        howlRef.current.unload();
+        howlRef.current = null;
+      }
+    },
+    [stopProgressLoop],
+  );
 
   return {
     loadTrack,
