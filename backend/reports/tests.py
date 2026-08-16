@@ -7,7 +7,7 @@ from rest_framework.test import APITestCase
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from accounts.models import ArtistProfile, ArtistStatus, User, UserRole, UserSettings
-from catalog.models import Song
+from music.models import Song
 from reports.models import ArtistSettlement, SettlementStatus
 from reports.services import calculate_artist_earnings, current_month_key
 from subscriptions.models import PricingConfig, Subscription, SubscriptionTier
@@ -119,17 +119,3 @@ class ReportsAPITests(APITestCase):
         self.assertTrue(
             ArtistSettlement.objects.get(pk=settlement_id).paid_at is not None
         )
-
-    def test_home_feed_public(self):
-        res = self.client.get(reverse("home-feed"))
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(res.data["popular_songs"]), 1)
-        self.assertEqual(len(res.data["early_access_songs"]), 1)
-
-    def test_record_stream(self):
-        song = Song.objects.first()
-        self._auth(self.listener)
-        res = self.client.post(reverse("songs-stream", kwargs={"pk": song.pk}))
-        self.assertEqual(res.status_code, status.HTTP_200_OK)
-        song.refresh_from_db()
-        self.assertEqual(song.stream_count, 201)

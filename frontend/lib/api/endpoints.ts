@@ -257,19 +257,20 @@ export async function apiUpdateTicketStatus(
 export interface ApiSong {
   id: number;
   artist_id: number;
-  artist_stage_name: string;
+  artist_name?: string;
+  artist_stage_name?: string;
   album_id: number | null;
   title: string;
   lyrics: string;
   genre: string;
-  release_year: number;
+  release_year: number | null;
   cover_url: string | null;
   audio_url: string | null;
   duration_seconds: number;
   is_early_access: boolean;
   featured_artist_ids: number[];
-  listener_count: number;
-  stream_count: number;
+  listener_count: number | null;
+  stream_count: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -277,62 +278,77 @@ export interface ApiSong {
 export interface ApiAlbum {
   id: number;
   artist_id: number;
-  artist_stage_name: string;
+  artist_name?: string;
+  artist_stage_name?: string;
   title: string;
   genre: string;
-  release_year: number;
+  release_year: number | null;
   cover_url: string | null;
   song_ids: number[];
   songs?: ApiSong[];
-  listener_count: number;
-  stream_count: number;
+  listener_count: number | null;
+  stream_count: number | null;
   created_at: string;
   updated_at: string;
 }
 
 export interface ApiMyWorks {
-  artist_id: number;
   albums: ApiAlbum[];
   songs: ApiSong[];
 }
 
-export interface ApiReleaseResponse {
-  song?: ApiSong;
-  album?: ApiAlbum;
-  songs?: ApiSong[];
+export interface ApiArtistWorks {
+  id: number;
+  albums: ApiAlbum[];
+  singles: ApiSong[];
 }
 
 export async function apiFetchMyWorks(): Promise<ApiMyWorks> {
-  return apiRequest<ApiMyWorks>("/artists/me/works/");
+  const [albums, songs] = await Promise.all([
+    apiRequest<ApiAlbum[]>("/me/albums/"),
+    apiRequest<ApiSong[]>("/me/songs/"),
+  ]);
+  return { albums, songs };
 }
 
-export async function apiPublishRelease(formData: FormData): Promise<ApiReleaseResponse> {
-  return apiRequest<ApiReleaseResponse>("/releases/", {
+export async function apiFetchArtistWorks(artistId: string): Promise<ApiArtistWorks> {
+  return apiRequest<ApiArtistWorks>(`/artists/${artistId}/works/`);
+}
+
+export async function apiCreateAlbum(formData: FormData): Promise<ApiAlbum> {
+  return apiRequest<ApiAlbum>("/me/albums/", {
+    method: "POST",
+    body: formData,
+  });
+}
+
+export async function apiCreateSong(formData: FormData): Promise<ApiSong> {
+  return apiRequest<ApiSong>("/me/songs/", {
     method: "POST",
     body: formData,
   });
 }
 
 export async function apiUpdateSong(id: string, formData: FormData): Promise<ApiSong> {
-  return apiRequest<ApiSong>(`/songs/${id}/`, {
+  return apiRequest<ApiSong>(`/me/songs/${id}/`, {
     method: "PATCH",
     body: formData,
   });
 }
 
 export async function apiDeleteSong(id: string): Promise<void> {
-  await apiRequest<void>(`/songs/${id}/`, { method: "DELETE" });
+  await apiRequest<void>(`/me/songs/${id}/`, { method: "DELETE" });
 }
 
 export async function apiUpdateAlbum(id: string, formData: FormData): Promise<ApiAlbum> {
-  return apiRequest<ApiAlbum>(`/albums/${id}/`, {
+  return apiRequest<ApiAlbum>(`/me/albums/${id}/`, {
     method: "PATCH",
     body: formData,
   });
 }
 
 export async function apiDeleteAlbum(id: string): Promise<void> {
-  await apiRequest<void>(`/albums/${id}/`, { method: "DELETE" });
+  await apiRequest<void>(`/me/albums/${id}/`, { method: "DELETE" });
 }
 
 export interface ApiSubscriptionDistributionSegment {
@@ -376,6 +392,7 @@ export interface ApiSettlementList {
 }
 
 export interface ApiHomeFeed {
+  recent_playlists?: unknown[];
   latest_albums: ApiAlbum[];
   popular_songs: ApiSong[];
   early_access_songs: ApiSong[];
@@ -403,8 +420,8 @@ export async function apiConfirmSettlement(id: string): Promise<ApiSettlement> {
   });
 }
 
-export async function apiFetchHomeFeed(limit = 6): Promise<ApiHomeFeed> {
-  return apiRequest<ApiHomeFeed>(`/home/?limit=${limit}`, { auth: false });
+export async function apiFetchHomeFeed(): Promise<ApiHomeFeed> {
+  return apiRequest<ApiHomeFeed>("/home/");
 }
 
 export async function apiRecordSongStream(id: string): Promise<ApiSong> {

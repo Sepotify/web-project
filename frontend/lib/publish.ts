@@ -1,5 +1,4 @@
 import { ApiError } from "@/lib/api/client";
-import { apiPublishRelease } from "@/lib/api/endpoints";
 import { addSong } from "@/lib/storage";
 import { releaseAlbum, releaseSong } from "@/lib/releases";
 import {
@@ -145,51 +144,64 @@ async function publishReleaseViaApi(
   input: PublishReleaseInput,
 ): Promise<PublishReleaseResult> {
   const featuredArtistIds = resolveFeaturedArtistIds(input.featuredArtists, artistId);
-  const formData = new FormData();
-  formData.append("release_type", input.releaseType);
-  formData.append("title", input.title.trim());
-  formData.append("genre", input.genre.trim());
-  formData.append("release_year", String(input.releaseYear));
-  formData.append("featured_artist_ids", featuredArtistIds.join(","));
-  formData.append("cover", input.coverFile);
+  const { apiCreateAlbum, apiCreateSong } = await import("@/lib/api/endpoints");
+  const { addAlbum } = await import("@/lib/storage");
 
-  for (let index = 0; index < input.tracks.length; index += 1) {
-    const track = input.tracks[index];
+  function appendFeatured(formData: FormData) {
+    for (const id of featuredArtistIds) {
+      formData.append("featured_artist_ids", id);
+    }
+  }
+
+  if (input.releaseType === "single") {
+    const track = input.tracks[0];
     const durationSeconds = await getAudioDurationSeconds(track.audioFile);
-    formData.append(
-      `track_${index}_title`,
-      input.releaseType === "single" ? input.title.trim() : track.title.trim(),
-    );
-    formData.append(`track_${index}_lyrics`, track.lyrics.trim());
-    formData.append(`track_${index}_audio`, track.audioFile);
-    formData.append(`track_${index}_duration_seconds`, String(durationSeconds));
-  }
+    const formData = new FormData();
+    formData.append("title", input.title.trim());
+    formData.append("genre", input.genre.trim());
+    formData.append("release_year", String(input.releaseYear));
+    formData.append("lyrics", track.lyrics.trim());
+    formData.append("duration_seconds", String(durationSeconds));
+    formData.append("audio", track.audioFile);
+    formData.append("cover", input.coverFile);
+    appendFeatured(formData);
 
-  const data = await apiPublishRelease(formData);
-
-  if (data.album) {
-    const album = mapApiAlbum(data.album);
-    const songs = (data.songs ?? []).map(mapApiSong);
-    for (const song of songs) {
-      addSong(song);
-    }
-    // Persist album without re-firing local follower notifications (BE already did).
-    const { addAlbum } = await import("@/lib/storage");
-    if (!songs.length) {
-      addAlbum(album);
-    } else {
-      addAlbum({ ...album, songIds: songs.map((song) => song.id) });
-    }
-    return { success: true, album };
-  }
-
-  if (data.song) {
-    const song = mapApiSong(data.song);
+    const data = await apiCreateSong(formData);
+    const song = mapApiSong(data);
     addSong(song);
     return { success: true, song };
   }
 
-  return { success: false, error: "Unexpected response from the server." };
+  const albumForm = new FormData();
+  albumForm.append("title", input.title.trim());
+  albumForm.append("genre", input.genre.trim());
+  albumForm.append("release_year", String(input.releaseYear));
+  albumForm.append("cover", input.coverFile);
+  const albumData = await apiCreateAlbum(albumForm);
+  const album = mapApiAlbum(albumData);
+  const songIds: string[] = [];
+
+  for (const track of input.tracks) {
+    const durationSeconds = await getAudioDurationSeconds(track.audioFile);
+    const songForm = new FormData();
+    songForm.append("title", track.title.trim());
+    songForm.append("genre", input.genre.trim());
+    songForm.append("release_year", String(input.releaseYear));
+    songForm.append("lyrics", track.lyrics.trim());
+    songForm.append("duration_seconds", String(durationSeconds));
+    songForm.append("album", String(albumData.id));
+    songForm.append("audio", track.audioFile);
+    appendFeatured(songForm);
+
+    const songData = await apiCreateSong(songForm);
+    const song = mapApiSong(songData);
+    addSong(song);
+    songIds.push(song.id);
+  }
+
+  const savedAlbum = { ...album, songIds };
+  addAlbum(savedAlbum);
+  return { success: true, album: savedAlbum };
 }
 
 export async function publishRelease(

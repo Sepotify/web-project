@@ -1,9 +1,10 @@
 import { ApiError } from "@/lib/api/client";
 import {
+  apiCreateAlbum,
+  apiCreateSong,
   apiDeleteAlbum,
   apiDeleteSong,
   apiFetchMyWorks,
-  apiPublishRelease,
   apiUpdateAlbum,
   apiUpdateSong,
   type ApiAlbum,
@@ -45,11 +46,11 @@ export function mapApiSong(song: ApiSong): Song {
     audioUrl: song.audio_url ?? undefined,
     lyrics: song.lyrics || undefined,
     genre: song.genre || undefined,
-    releaseYear: song.release_year,
+    releaseYear: song.release_year ?? undefined,
     featuredArtistIds: (song.featured_artist_ids ?? []).map(String),
-    listenerCount: song.listener_count,
-    streamCount: song.stream_count,
-    durationSeconds: song.duration_seconds,
+    listenerCount: song.listener_count ?? 0,
+    streamCount: song.stream_count ?? 0,
+    durationSeconds: song.duration_seconds ?? 0,
     isEarlyAccess: song.is_early_access,
     createdAt: song.created_at,
   };
@@ -62,10 +63,10 @@ export function mapApiAlbum(album: ApiAlbum): Album {
     artistId: String(album.artist_id),
     coverUrl: album.cover_url ?? undefined,
     genre: album.genre || undefined,
-    releaseYear: album.release_year,
+    releaseYear: album.release_year ?? undefined,
     songIds: (album.song_ids ?? []).map(String),
-    listenerCount: album.listener_count,
-    streamCount: album.stream_count,
+    listenerCount: album.listener_count ?? 0,
+    streamCount: album.stream_count ?? 0,
     createdAt: album.created_at,
   };
 }
@@ -395,4 +396,4 @@ export function getLocalCatalogSnapshot(artistId: string): {
   };
 }
 
-export { apiPublishRelease, mapApiSong as mapSongFromApi, mapApiAlbum as mapAlbumFromApi };
+export { mapApiSong as mapSongFromApi, mapApiAlbum as mapAlbumFromApi };

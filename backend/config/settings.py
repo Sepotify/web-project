@@ -40,7 +40,6 @@ INSTALLED_APPS = [
     "subscriptions.apps.SubscriptionsConfig",
     "music.apps.MusicConfig",
     "tickets.apps.TicketsConfig",
-    "catalog.apps.CatalogConfig",
     "reports.apps.ReportsConfig",
 ]
 
