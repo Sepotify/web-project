@@ -5,19 +5,22 @@ import { useRouter } from "next/navigation";
 import { FinancialAuditTable } from "@/components/dashboard/FinancialAuditTable";
 import { useToast } from "@/components/ui/Toast";
 import {
-  confirmArtistSettlement,
+  confirmArtistSettlementRequest,
+  fetchMonthlySettlementAudit,
   getCurrentMonthKey,
-  getMonthlySettlementAudit,
   isDashboardAdmin,
+  type SettlementAuditRow,
 } from "@/lib/finance";
 import { useAuth } from "@/store/AuthContext";
 
 export default function DashboardFinancePage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, useApiAuth } = useAuth();
   const { showToast } = useToast();
-  const [version, setVersion] = useState(0);
+  const [rows, setRows] = useState<SettlementAuditRow[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const monthKey = getCurrentMonthKey();
 
@@ -27,9 +30,27 @@ export default function DashboardFinancePage() {
     }
   }, [router, user]);
 
-  void version;
+  useEffect(() => {
+    if (!user || user.role !== "admin") return;
 
-  if (!user || user.role === "support") {
+    let cancelled = false;
+
+    async function load() {
+      setIsLoading(true);
+      const nextRows = await fetchMonthlySettlementAudit(monthKey, useApiAuth);
+      if (!cancelled) {
+        setRows(nextRows);
+        setIsLoading(false);
+      }
+    }
+
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, useApiAuth, monthKey, refreshKey]);
+
+  if (!user || user.role === "support" || isLoading) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
         <p className="text-text-secondary">Loading financial audit...</p>
@@ -37,22 +58,25 @@ export default function DashboardFinancePage() {
     );
   }
 
-  const rows = getMonthlySettlementAudit(monthKey);
   const canConfirmSettlement = isDashboardAdmin(user.role);
 
-  function handleConfirmSettlement(settlementId: string) {
+  async function handleConfirmSettlement(settlementId: string) {
     if (!user) return;
 
     setConfirmingId(settlementId);
-    const confirmed = confirmArtistSettlement(settlementId, user.role);
+    const result = await confirmArtistSettlementRequest(
+      settlementId,
+      user.role,
+      useApiAuth,
+    );
     setConfirmingId(null);
 
-    if (!confirmed) {
-      showToast("Could not confirm settlement.", "error");
+    if (!result.success) {
+      showToast(result.error ?? "Could not confirm settlement.", "error");
       return;
     }
 
-    setVersion((value) => value + 1);
+    setRefreshKey((value) => value + 1);
     showToast("Settlement confirmed.", "success");
   }
 
@@ -69,7 +93,7 @@ export default function DashboardFinancePage() {
         rows={rows}
         monthKey={monthKey}
         canConfirmSettlement={canConfirmSettlement}
-        onConfirmSettlement={handleConfirmSettlement}
+        onConfirmSettlement={(id) => void handleConfirmSettlement(id)}
         confirmingId={confirmingId}
       />
     </div>

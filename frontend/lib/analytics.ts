@@ -1,3 +1,8 @@
+import { ApiError } from "@/lib/api/client";
+import {
+  apiFetchRevenueStats,
+  apiFetchSubscriptionDistribution,
+} from "@/lib/api/endpoints";
 import { formatMonthKey, getCurrentMonthKey } from "@/lib/finance";
 import { getSubscriptionPricing, getUsers } from "@/lib/storage";
 import type { SubscriptionTier } from "@/types";
@@ -84,6 +89,52 @@ export function getCurrentMonthRevenueStats(
     silverPrice: pricing.silverMonthly,
     goldPrice: pricing.goldMonthly,
   };
+}
+
+export async function fetchSubscriptionDistribution(
+  useApi: boolean,
+): Promise<SubscriptionDistributionSegment[]> {
+  if (!useApi) return getSubscriptionDistribution();
+
+  try {
+    const data = await apiFetchSubscriptionDistribution();
+    return data.results.map((segment) => ({
+      tier: segment.tier,
+      label: segment.label,
+      count: segment.count,
+      percentage: segment.percentage,
+      color: segment.color,
+    }));
+  } catch (error) {
+    if (error instanceof ApiError) {
+      return getSubscriptionDistribution();
+    }
+    return getSubscriptionDistribution();
+  }
+}
+
+export async function fetchCurrentMonthRevenueStats(
+  useApi: boolean,
+): Promise<CurrentMonthRevenueStats> {
+  if (!useApi) return getCurrentMonthRevenueStats();
+
+  try {
+    const data = await apiFetchRevenueStats();
+    return {
+      monthKey: data.month_key,
+      monthLabel: data.month_label,
+      totalRevenue: data.total_revenue,
+      silverRevenue: data.silver_revenue,
+      goldRevenue: data.gold_revenue,
+      silverSubscribers: data.silver_subscribers,
+      goldSubscribers: data.gold_subscribers,
+      payingSubscribers: data.paying_subscribers,
+      silverPrice: data.silver_price,
+      goldPrice: data.gold_price,
+    };
+  } catch {
+    return getCurrentMonthRevenueStats();
+  }
 }
 
 export function buildPieChartGradient(

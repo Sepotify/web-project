@@ -334,3 +334,79 @@ export async function apiUpdateAlbum(id: string, formData: FormData): Promise<Ap
 export async function apiDeleteAlbum(id: string): Promise<void> {
   await apiRequest<void>(`/albums/${id}/`, { method: "DELETE" });
 }
+
+export interface ApiSubscriptionDistributionSegment {
+  tier: SubscriptionTier;
+  label: string;
+  count: number;
+  percentage: number;
+  color: string;
+}
+
+export interface ApiRevenueStats {
+  month_key: string;
+  month_label: string;
+  total_revenue: number;
+  silver_revenue: number;
+  gold_revenue: number;
+  silver_subscribers: number;
+  gold_subscribers: number;
+  paying_subscribers: number;
+  silver_price: number;
+  gold_price: number;
+}
+
+export interface ApiSettlement {
+  id: number;
+  artist_id: number;
+  artist_stage_name: string;
+  month_key: string;
+  unique_listeners: number;
+  streams: number;
+  payout_amount: number;
+  status: "pending" | "paid";
+  created_at: string;
+  paid_at: string | null;
+}
+
+export interface ApiSettlementList {
+  month_key: string;
+  count: number;
+  results: ApiSettlement[];
+}
+
+export interface ApiHomeFeed {
+  latest_albums: ApiAlbum[];
+  popular_songs: ApiSong[];
+  early_access_songs: ApiSong[];
+}
+
+export async function apiFetchSubscriptionDistribution(): Promise<{
+  results: ApiSubscriptionDistributionSegment[];
+}> {
+  return apiRequest("/admin/analytics/subscription-distribution/");
+}
+
+export async function apiFetchRevenueStats(month?: string): Promise<ApiRevenueStats> {
+  const query = month ? `?month=${encodeURIComponent(month)}` : "";
+  return apiRequest<ApiRevenueStats>(`/admin/analytics/revenue/${query}`);
+}
+
+export async function apiFetchSettlements(month?: string): Promise<ApiSettlementList> {
+  const query = month ? `?month=${encodeURIComponent(month)}` : "";
+  return apiRequest<ApiSettlementList>(`/admin/finance/settlements/${query}`);
+}
+
+export async function apiConfirmSettlement(id: string): Promise<ApiSettlement> {
+  return apiRequest<ApiSettlement>(`/admin/finance/settlements/${id}/confirm/`, {
+    method: "POST",
+  });
+}
+
+export async function apiFetchHomeFeed(limit = 6): Promise<ApiHomeFeed> {
+  return apiRequest<ApiHomeFeed>(`/home/?limit=${limit}`, { auth: false });
+}
+
+export async function apiRecordSongStream(id: string): Promise<ApiSong> {
+  return apiRequest<ApiSong>(`/songs/${id}/stream/`, { method: "POST" });
+}
