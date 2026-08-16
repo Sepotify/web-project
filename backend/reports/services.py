@@ -5,7 +5,7 @@ from django.db.models import Count, Sum
 from django.utils import timezone
 
 from accounts.models import ArtistProfile, ArtistStatus, User
-from catalog.models import Album, Song
+from music.models import Song
 from reports.models import ArtistSettlement, SettlementStatus
 from subscriptions.models import PricingConfig, Subscription, SubscriptionTier
 
@@ -43,7 +43,6 @@ def get_subscription_distribution() -> list[dict]:
     for row in rows:
         counts[row["tier"]] = row["count"]
 
-    # Users without a Subscription row count as basic.
     users_with_sub = Subscription.objects.count()
     total_users = User.objects.filter(is_active=True).count()
     counts[SubscriptionTier.BASIC] += max(total_users - users_with_sub, 0)
@@ -106,7 +105,6 @@ def sync_monthly_settlements(month_key: str | None = None) -> int:
     for artist in artists:
         if artist.id in existing:
             continue
-        # Prefer live song aggregates; fall back to profile totals.
         aggregates = Song.objects.filter(artist=artist).aggregate(
             streams=Sum("stream_count"),
             listeners=Sum("listener_count"),
@@ -123,25 +121,3 @@ def sync_monthly_settlements(month_key: str | None = None) -> int:
         )
         created += 1
     return created
-
-
-def get_home_feed(limit: int = 6) -> dict:
-    latest_albums = list(
-        Album.objects.select_related("artist").order_by("-created_at")[:limit]
-    )
-    popular_songs = list(
-        Song.objects.select_related("artist", "album")
-        .prefetch_related("featured_artists")
-        .order_by("-listener_count", "-stream_count", "-created_at")[:limit]
-    )
-    early_access = list(
-        Song.objects.filter(is_early_access=True)
-        .select_related("artist", "album")
-        .prefetch_related("featured_artists")
-        .order_by("-created_at")[:limit]
-    )
-    return {
-        "latest_albums": latest_albums,
-        "popular_songs": popular_songs,
-        "early_access_songs": early_access,
-    }

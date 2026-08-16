@@ -1,8 +1,6 @@
 from django.urls import path
 
 from reports.views import (
-    HomeFeedView,
-    RecordSongStreamView,
     RevenueAnalyticsView,
     SettlementConfirmView,
     SettlementListView,
@@ -30,6 +28,4 @@ urlpatterns = [
         SettlementConfirmView.as_view(),
         name="admin-finance-settlements-confirm",
     ),
-    path("home/", HomeFeedView.as_view(), name="home-feed"),
-    path("songs/<int:pk>/stream/", RecordSongStreamView.as_view(), name="songs-stream"),
 ]
