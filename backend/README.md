@@ -1,7 +1,7 @@
 # Backend — Django + DRF (Phase 2)
 
 Person 1 foundation: auth, users, artists, settings, notifications, subscriptions.  
-Person 3 (Sam): tickets, catalog (Song/Album uploads), reports (analytics/finance/home).
+Person 3 (Sam): tickets, reports (analytics/finance). Song/Album uploads live in Person 2 `music`.
 
 ## Auth
 
@@ -99,17 +99,16 @@ Frontend uses `NEXT_PUBLIC_API_URL=http://127.0.0.1:8000/api`.
 - `POST /api/tickets/{id}/reply/`
 - `PATCH /api/tickets/{id}/status/` (support/admin)
 
-### Catalog (Person 3)
-- `GET/POST /api/songs/`
-- `GET/PATCH/DELETE /api/songs/{id}/`
-- `GET/POST /api/albums/`
-- `GET/PATCH/DELETE /api/albums/{id}/`
-- `GET /api/artists/me/works/`
-- `POST /api/releases/` (multipart single|album)
-- `POST /api/songs/{id}/stream/`
-
-### Reports / home (Person 3)
+### Catalog / music (Person 2 — use these for works + home)
 - `GET /api/home/`
+- `GET/POST /api/me/albums/`
+- `GET/PATCH/DELETE /api/me/albums/{id}/`
+- `GET/POST /api/me/songs/`
+- `GET/PATCH/DELETE /api/me/songs/{id}/`
+- `POST /api/songs/{id}/stream/`
+- See `music/README.md` for search, playlists, download.
+
+### Reports (Person 3)
 - `GET /api/admin/analytics/subscription-distribution/` (admin)
 - `GET /api/admin/analytics/revenue/` (admin)
 - `GET /api/admin/finance/settlements/?month=YYYY-MM` (admin)
@@ -121,4 +120,4 @@ Frontend uses `NEXT_PUBLIC_API_URL=http://127.0.0.1:8000/api`.
 python manage.py test
 ```
 
-Expect 31+ tests across accounts, notifications, tickets, catalog, and reports.
+Expect 28+ tests across accounts, notifications, music, tickets, and reports.
