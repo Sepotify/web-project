@@ -156,6 +156,13 @@ export default function SettingsPage() {
                 showToast("Support ticket submitted. Staff will follow up soon.", "success");
               }}
             />
+            <p className="mt-3 text-sm text-text-muted">
+              Track replies in{" "}
+              <a href="/my-tickets" className="text-accent-primary hover:underline">
+                My tickets
+              </a>
+              .
+            </p>
           </SettingsSection>
         )}
 

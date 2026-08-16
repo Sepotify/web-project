@@ -41,6 +41,7 @@ const navSections: NavSection[] = [
     items: [
       { href: "/profile", label: "Profile", roles: ["listener", "artist"], matchPrefix: true },
       { href: "/settings", label: "Settings", roles: ["listener", "artist"] },
+      { href: "/my-tickets", label: "My tickets", roles: ["listener", "artist"], matchPrefix: true },
     ],
   },
   {

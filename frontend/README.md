@@ -22,23 +22,52 @@ hooks/        → Custom React hooks
 store/        → AuthContext, PlayerContext, and global state
 ```
 
-## Getting Started
+## Getting Started (Phase 2)
+
+Run **backend** and **frontend** together.
+
+### 1) Backend (Django)
 
 ```bash
+cd backend
+python -m venv .venv
+# Windows:
+.venv\Scripts\pip install -r requirements.txt
+copy .env.example .env
+.venv\Scripts\python manage.py migrate
+.venv\Scripts\python manage.py seed_users
+.venv\Scripts\python manage.py runserver
+```
+
+API docs: [http://127.0.0.1:8000/api/docs/](http://127.0.0.1:8000/api/docs/)
+
+### 2) Frontend (Next.js)
+
+```bash
+cd frontend
+copy .env.example .env.local
 npm install
 npm run dev
 ```
 
+`.env.local` must include:
+
+```env
+NEXT_PUBLIC_API_URL=http://127.0.0.1:8000/api
+```
+
 Open [http://localhost:3000](http://localhost:3000).
 
-### Demo Accounts
+Auth prefers the Django JWT API and falls back to localStorage demo users if the backend is down.
 
-| Role     | Email                 | Password |
-|----------|-----------------------|----------|
-| Listener | listener@example.com  | 123456   |
-| Artist   | artist@example.com    | 123456   |
-| Support  | support@example.com   | 123456   |
-| Admin    | admin@example.com     | 123456   |
+### Backend seed accounts
+
+| Role    | Email               | Password (default) |
+|---------|---------------------|--------------------|
+| Admin   | admin@example.com   | AdminPass123!      |
+| Support | support@example.com | SupportPass123!    |
+
+Register listeners/artists via the UI (or Swagger) against the API.
 
 ### Scripts
 

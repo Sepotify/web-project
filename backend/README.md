@@ -1,82 +1,124 @@
-# Person 1 — Auth, Users, Artists, Settings, Notifications, Subscription skeleton
-#
-# Auth strategy: JWT (djangorestframework-simplejwt)
-#   - Login/register return { access, refresh }
-#   - Logout blacklists the refresh token
-#   - Send: Authorization: Bearer <access>
-#
+# Backend — Django + DRF (Phase 2)
+
+Person 1 foundation: auth, users, artists, settings, notifications, subscriptions.  
+Person 3 (Sam): tickets, catalog (Song/Album uploads), reports (analytics/finance/home).
+
+## Auth
+
+JWT via `djangorestframework-simplejwt`:
+
+- Login/register return `{ access, refresh }`
+- Logout blacklists the refresh token
+- Send: `Authorization: Bearer <access>`
+
 ## Setup
-#
-#   cd backend
-#   python -m venv ../.venv          # or use repo-root .venv
-#   ../.venv/Scripts/pip install -r requirements.txt
-#   copy .env.example .env           # Windows
-#   python manage.py migrate
-#   python manage.py seed_users
-#   python manage.py runserver
-#
-# Swagger UI: http://127.0.0.1:8000/api/docs/
-#
+
+```bash
+cd backend
+python -m venv .venv
+# Windows:
+.venv\Scripts\pip install -r requirements.txt
+copy .env.example .env
+.venv\Scripts\python manage.py migrate
+.venv\Scripts\python manage.py seed_users
+.venv\Scripts\python manage.py runserver
+```
+
+Swagger UI: http://127.0.0.1:8000/api/docs/
+
 ## Seed users
-#
-# | Role    | Email                 | Password (from .env) |
-# |---------|-----------------------|----------------------|
-# | admin   | admin@example.com     | AdminPass123!        |
-# | support | support@example.com   | SupportPass123!      |
-#
-# Only one admin is allowed system-wide.
-#
-## Capability helpers (import from subscriptions.services)
-#
-#   can_upload_avatar(user)   # False for basic
-#   max_playlists(user)       # 6 / 100 / None(∞)
-#   daily_stream_limit(user)  # 60 / None / None
-#   can_see_stats(user)       # gold only
-#   can_early_access(user)    # gold only
-#   can_download(user)        # silver+gold
-#   set_user_tier(user, tier) # admin testing helper
-#
-## Permission classes (accounts.permissions)
-#
-#   IsAdmin, IsSupportOrAdmin, IsApprovedArtist, IsOwner, HasSubscriptionCapability
-#
+
+| Role    | Email                 | Password (from `.env`) |
+|---------|-----------------------|------------------------|
+| admin   | admin@example.com     | AdminPass123!          |
+| support | support@example.com   | SupportPass123!        |
+
+Only one admin is allowed system-wide.
+
+## CORS / frontend
+
+`CORS_ALLOWED_ORIGINS` in `.env` must include the Next.js origin, e.g.:
+
+```env
+CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+```
+
+Frontend uses `NEXT_PUBLIC_API_URL=http://127.0.0.1:8000/api`.
+
+## Capability helpers (`subscriptions.services`)
+
+- `can_upload_avatar(user)` — False for basic
+- `max_playlists(user)` — 6 / 100 / None(∞)
+- `daily_stream_limit(user)` — 60 / None / None
+- `can_see_stats(user)` — gold only
+- `can_early_access(user)` — gold only
+- `can_download(user)` — silver+gold
+- `set_user_tier(user, tier)` — admin testing helper
+
+## Permission classes (`accounts.permissions`)
+
+`IsAdmin`, `IsSupportOrAdmin`, `IsApprovedArtist`, `IsOwner`, `HasSubscriptionCapability`
+
 ## Main endpoints
-#
-# Auth
-#   POST   /api/auth/register/
-#   POST   /api/auth/login/
-#   POST   /api/auth/logout/                  { "refresh": "..." }
-#   POST   /api/auth/password-reset/request/  { "email": "..." }
-#   POST   /api/auth/password-reset/confirm/  { "token", "new_password", "confirm_password" }
-#
-# Users
-#   GET/PATCH/DELETE  /api/users/me/
-#   GET/PATCH         /api/users/me/settings/
-#   GET               /api/users/me/subscription/
-#   GET               /api/users/{id}/
-#   POST/DELETE       /api/users/{id}/follow/
-#   GET               /api/users/{id}/follow-counts/
-#
-# Artists
-#   POST   /api/artists/register/
-#   GET    /api/artists/pending/          (support/admin)
-#   GET    /api/artists/{id}/
-#   POST   /api/artists/{id}/approve/     (support/admin)
-#   POST   /api/artists/{id}/reject/      { "reason": "..." }
-#   POST/DELETE /api/artists/{id}/follow/
-#
-# Notifications
-#   GET    /api/notifications/            empty list is valid empty state
-#   PATCH  /api/notifications/{id}/read/
-#   DELETE /api/notifications/{id}/
-#   POST   /api/notifications/mark-all-read/
-#
-# Pricing / admin
-#   GET    /api/pricing/
-#   PATCH  /api/admin/pricing/                      (admin)
-#   PATCH  /api/admin/users/{id}/subscription/      (admin, manual tier)
-#
+
+### Auth
+- `POST /api/auth/register/`
+- `POST /api/auth/login/`
+- `POST /api/auth/logout/` `{ "refresh": "..." }`
+- `POST /api/auth/password-reset/request/`
+- `POST /api/auth/password-reset/confirm/`
+
+### Users
+- `GET/PATCH/DELETE /api/users/me/`
+- `GET/PATCH /api/users/me/settings/`
+- `GET /api/users/me/subscription/`
+- `GET /api/users/{id}/`
+- `POST/DELETE /api/users/{id}/follow/`
+
+### Artists
+- `POST /api/artists/register/`
+- `GET /api/artists/pending/` (support/admin)
+- `GET /api/artists/{id}/`
+- `POST /api/artists/{id}/approve/`
+- `POST /api/artists/{id}/reject/`
+- `POST/DELETE /api/artists/{id}/follow/`
+
+### Notifications
+- `GET /api/notifications/`
+- `PATCH /api/notifications/{id}/read/`
+- `DELETE /api/notifications/{id}/`
+- `POST /api/notifications/mark-all-read/`
+
+### Pricing
+- `GET /api/pricing/`
+- `PATCH /api/admin/pricing/` (admin)
+
+### Tickets (Person 3)
+- `GET/POST /api/tickets/`
+- `GET /api/tickets/{id}/`
+- `POST /api/tickets/{id}/reply/`
+- `PATCH /api/tickets/{id}/status/` (support/admin)
+
+### Catalog (Person 3)
+- `GET/POST /api/songs/`
+- `GET/PATCH/DELETE /api/songs/{id}/`
+- `GET/POST /api/albums/`
+- `GET/PATCH/DELETE /api/albums/{id}/`
+- `GET /api/artists/me/works/`
+- `POST /api/releases/` (multipart single|album)
+- `POST /api/songs/{id}/stream/`
+
+### Reports / home (Person 3)
+- `GET /api/home/`
+- `GET /api/admin/analytics/subscription-distribution/` (admin)
+- `GET /api/admin/analytics/revenue/` (admin)
+- `GET /api/admin/finance/settlements/?month=YYYY-MM` (admin)
+- `POST /api/admin/finance/settlements/{id}/confirm/` (admin)
+
 ## Tests
-#
-#   python manage.py test accounts
-#
+
+```bash
+python manage.py test
+```
+
+Expect 31+ tests across accounts, notifications, tickets, catalog, and reports.
