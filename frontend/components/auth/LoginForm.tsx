@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
@@ -33,13 +33,13 @@ export function LoginForm() {
     return Object.keys(nextErrors).length === 0;
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     if (!validateForm()) return;
 
     setIsSubmitting(true);
-    const result = loginWithCredentials(email, password);
+    const result = await loginWithCredentials(email, password);
     setIsSubmitting(false);
 
     if (!result.success || !result.user) {
@@ -52,7 +52,7 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+    <form onSubmit={(event) => void handleSubmit(event)} className="flex flex-col gap-4" noValidate>
       <Input
         label="Email"
         type="email"

@@ -1,4 +1,5 @@
 from django.urls import path
+from rest_framework_simplejwt.views import TokenRefreshView
 
 from accounts.views import (
     ApproveArtistView,
@@ -24,6 +25,7 @@ urlpatterns = [
     path("auth/register/", RegisterListenerView.as_view(), name="auth-register"),
     path("auth/login/", LoginView.as_view(), name="auth-login"),
     path("auth/logout/", LogoutView.as_view(), name="auth-logout"),
+    path("auth/token/refresh/", TokenRefreshView.as_view(), name="auth-token-refresh"),
     path(
         "auth/password-reset/request/",
         PasswordResetRequestView.as_view(),

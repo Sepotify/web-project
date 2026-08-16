@@ -88,3 +88,42 @@ def notify_subscription_expiring(user: User, days_remaining: int) -> None:
         ),
         link="/settings",
     )
+
+
+def notify_staff_new_ticket(ticket) -> None:
+    staff = User.objects.filter(role__in=[UserRole.SUPPORT, UserRole.ADMIN], is_active=True)
+    for user in staff:
+        create_notification(
+            user=user,
+            type=NotificationType.NEW_TICKET,
+            title="New support ticket",
+            message=f"{ticket.user.display_name}: {ticket.subject}",
+            link=f"/dashboard/tickets/{ticket.pk}",
+        )
+
+
+def notify_ticket_reply(ticket, message) -> None:
+    """Notify the other party when someone replies on a ticket."""
+    sender = message.sender
+    if sender.role in (UserRole.SUPPORT, UserRole.ADMIN):
+        recipients = [ticket.user]
+        title = "Support replied to your ticket"
+        link = "/settings"
+    else:
+        recipients = list(
+            User.objects.filter(role__in=[UserRole.SUPPORT, UserRole.ADMIN], is_active=True)
+        )
+        title = "New reply on a support ticket"
+        link = f"/dashboard/tickets/{ticket.pk}"
+
+    preview = (message.content or "")[:120]
+    for user in recipients:
+        if user.id == sender.id:
+            continue
+        create_notification(
+            user=user,
+            type=NotificationType.NEW_TICKET,
+            title=title,
+            message=f"{ticket.subject}: {preview}",
+            link=link,
+        )

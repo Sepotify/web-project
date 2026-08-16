@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { formatDashboardDate } from "@/lib/dashboard";
 import {
-  readSubscriptionPricing,
+  fetchSubscriptionPricing,
   updateSubscriptionPricing,
 } from "@/lib/pricing";
 import type { SubscriptionPricing, UserRole } from "@/types";
@@ -19,19 +19,38 @@ export function SubscriptionPricingPanel({
   role,
   onUpdated,
 }: SubscriptionPricingPanelProps) {
-  const initial = readSubscriptionPricing();
-  const [silverMonthly, setSilverMonthly] = useState(String(initial.silverMonthly));
-  const [goldMonthly, setGoldMonthly] = useState(String(initial.goldMonthly));
-  const [lastUpdated, setLastUpdated] = useState(initial.updatedAt);
+  const [silverMonthly, setSilverMonthly] = useState("4.99");
+  const [goldMonthly, setGoldMonthly] = useState("9.99");
+  const [lastUpdated, setLastUpdated] = useState(new Date(0).toISOString());
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      setIsLoading(true);
+      const pricing = await fetchSubscriptionPricing();
+      if (cancelled) return;
+      setSilverMonthly(String(pricing.silverMonthly));
+      setGoldMonthly(String(pricing.goldMonthly));
+      setLastUpdated(pricing.updatedAt);
+      setIsLoading(false);
+    }
+
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
     setIsSaving(true);
 
-    const result = updateSubscriptionPricing(
+    const result = await updateSubscriptionPricing(
       {
         silverMonthly: Number(silverMonthly),
         goldMonthly: Number(goldMonthly),
@@ -52,9 +71,17 @@ export function SubscriptionPricingPanel({
     onUpdated?.(result.pricing);
   }
 
+  if (isLoading) {
+    return (
+      <div className="rounded-lg border border-border-default bg-bg-elevated p-5 sm:p-6">
+        <p className="text-sm text-text-secondary">Loading subscription pricing...</p>
+      </div>
+    );
+  }
+
   return (
     <form
-      onSubmit={handleSubmit}
+      onSubmit={(event) => void handleSubmit(event)}
       className="rounded-lg border border-border-default bg-bg-elevated p-5 sm:p-6"
     >
       <div className="grid gap-5 sm:grid-cols-2">

@@ -1,19 +1,21 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { fetchSubscriptionPricing } from "@/lib/pricing";
 import { SUBSCRIPTION_LABELS } from "@/lib/profile";
-import { getSubscriptionPricing } from "@/lib/storage";
 import { useAuth } from "@/store/AuthContext";
+import type { SubscriptionPricing } from "@/types";
 
 export default function PaymentPage() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useAuth();
+  const [pricing, setPricing] = useState<SubscriptionPricing | null>(null);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -21,7 +23,17 @@ export default function PaymentPage() {
     }
   }, [isAuthenticated, isLoading, router]);
 
-  if (isLoading || !user) {
+  useEffect(() => {
+    let cancelled = false;
+    void fetchSubscriptionPricing().then((value) => {
+      if (!cancelled) setPricing(value);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (isLoading || !user || !pricing) {
     return (
       <AppShell>
         <div className="flex min-h-[40vh] items-center justify-center">
@@ -31,8 +43,6 @@ export default function PaymentPage() {
     );
   }
 
-  const pricing = getSubscriptionPricing();
-
   return (
     <AppShell>
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
@@ -41,7 +51,7 @@ export default function PaymentPage() {
             Upgrade subscription
           </h1>
           <p className="mt-1 text-sm text-text-secondary">
-            Payment integration will be available in Phase 2.
+            Prices come from the admin pricing API. Checkout gateway lands later in Phase 2.
           </p>
         </div>
 
@@ -52,8 +62,8 @@ export default function PaymentPage() {
           </div>
 
           <p className="text-sm leading-6 text-text-secondary">
-            This is a placeholder checkout page. In Phase 2, you will be able to
-            upgrade to Silver or Gold plans through a payment gateway.
+            This is a placeholder checkout page. Payment gateway integration will
+            activate Silver or Gold after a successful transaction.
           </p>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -75,7 +85,7 @@ export default function PaymentPage() {
 
           <div className="flex flex-col gap-2 sm:flex-row">
             <Button disabled className="flex-1">
-              Proceed to payment (Phase 2)
+              Proceed to payment (coming soon)
             </Button>
             <Link href="/settings" className="flex-1">
               <Button variant="secondary" className="w-full">

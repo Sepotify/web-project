@@ -21,6 +21,7 @@ urlpatterns = [
     path("api/", include("notifications.urls")),
     path("api/", include("subscriptions.urls")),
     path("api/", include("music.urls")),
+    path("api/", include("tickets.urls")),
 ]
 
 if settings.DEBUG:

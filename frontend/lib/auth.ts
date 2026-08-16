@@ -33,8 +33,12 @@ export function getRedirectPathForRole(role: UserRole): string {
 
 export function getRedirectPathForUser(user: User): string {
   if (user.role === "artist") {
+    if (user.artistStatus === "pending" || user.artistStatus === "rejected") {
+      return "/register/pending";
+    }
+
     const artist = getArtistByUserId(user.id);
-    if (artist?.status === "pending") {
+    if (artist?.status === "pending" || artist?.status === "rejected") {
       return "/register/pending";
     }
   }
