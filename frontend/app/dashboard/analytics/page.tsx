@@ -1,18 +1,23 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { RevenueStatCards } from "@/components/dashboard/RevenueStatCards";
 import { SubscriptionPieChart } from "@/components/dashboard/SubscriptionPieChart";
 import {
-  getCurrentMonthRevenueStats,
-  getSubscriptionDistribution,
+  fetchCurrentMonthRevenueStats,
+  fetchSubscriptionDistribution,
+  type CurrentMonthRevenueStats,
+  type SubscriptionDistributionSegment,
 } from "@/lib/analytics";
 import { useAuth } from "@/store/AuthContext";
 
 export default function DashboardAnalyticsPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, useApiAuth } = useAuth();
+  const [distribution, setDistribution] = useState<SubscriptionDistributionSegment[]>([]);
+  const [revenueStats, setRevenueStats] = useState<CurrentMonthRevenueStats | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (user && user.role === "support") {
@@ -20,16 +25,37 @@ export default function DashboardAnalyticsPage() {
     }
   }, [router, user]);
 
-  if (!user || user.role === "support") {
+  useEffect(() => {
+    if (!user || user.role !== "admin") return;
+
+    let cancelled = false;
+
+    async function load() {
+      setIsLoading(true);
+      const [nextDistribution, nextRevenue] = await Promise.all([
+        fetchSubscriptionDistribution(useApiAuth),
+        fetchCurrentMonthRevenueStats(useApiAuth),
+      ]);
+      if (!cancelled) {
+        setDistribution(nextDistribution);
+        setRevenueStats(nextRevenue);
+        setIsLoading(false);
+      }
+    }
+
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, useApiAuth]);
+
+  if (!user || user.role === "support" || isLoading || !revenueStats) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
         <p className="text-text-secondary">Loading analytics...</p>
       </div>
     );
   }
-
-  const distribution = getSubscriptionDistribution();
-  const revenueStats = getCurrentMonthRevenueStats();
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-5">

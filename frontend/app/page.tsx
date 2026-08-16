@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AppShell } from "@/components/layout/AppShell";
@@ -17,27 +17,25 @@ import {
   HOME_ALBUM_LIMIT,
   HOME_PLAYLIST_LIMIT,
   HOME_SONG_LIMIT,
-  getEarlyAccessSongs,
-  getLatestAlbums,
-  getPopularSongs,
+  fetchHomeFeed,
 } from "@/lib/home";
 import { getRecentlyPlayedPlaylists, recordPlaylistPlay } from "@/lib/recent-playlists";
-import { getSongById, getSongs } from "@/lib/storage";
+import { getSongById } from "@/lib/storage";
 import { canAccessEarlyAccess } from "@/lib/subscription";
 import { useAuth } from "@/store/AuthContext";
 import { usePlayer } from "@/hooks/usePlayer";
-import type { Playlist } from "@/types";
+import type { Album, Playlist, Song } from "@/types";
 
 export default function HomePage() {
   const router = useRouter();
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading, useApiAuth } = useAuth();
   const { playSong, playQueue } = usePlayer();
   const { showToast } = useToast();
   const [recentPlaylists, setRecentPlaylists] = useState<Playlist[]>([]);
-
-  const latestAlbums = useMemo(() => getLatestAlbums(HOME_ALBUM_LIMIT), []);
-  const popularSongs = useMemo(() => getPopularSongs(HOME_SONG_LIMIT), []);
-  const earlyAccessSongs = useMemo(() => getEarlyAccessSongs(), []);
+  const [latestAlbums, setLatestAlbums] = useState<Album[]>([]);
+  const [popularSongs, setPopularSongs] = useState<Song[]>([]);
+  const [earlyAccessSongs, setEarlyAccessSongs] = useState<Song[]>([]);
+  const [feedLoading, setFeedLoading] = useState(true);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -51,7 +49,29 @@ export default function HomePage() {
     }
   }, [user]);
 
-  if (isLoading || !user) {
+  useEffect(() => {
+    if (!user) return;
+
+    let cancelled = false;
+
+    async function load() {
+      setFeedLoading(true);
+      const feed = await fetchHomeFeed(useApiAuth, HOME_ALBUM_LIMIT);
+      if (!cancelled) {
+        setLatestAlbums(feed.latestAlbums);
+        setPopularSongs(feed.popularSongs.slice(0, HOME_SONG_LIMIT));
+        setEarlyAccessSongs(feed.earlyAccessSongs);
+        setFeedLoading(false);
+      }
+    }
+
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, useApiAuth]);
+
+  if (isLoading || !user || feedLoading) {
     return (
       <AppShell>
         <div className="flex min-h-[40vh] items-center justify-center">
@@ -82,11 +102,7 @@ export default function HomePage() {
     showToast(`Playing: ${playlist.name}`, "success");
   }
 
-  function handlePlaySong(songId: string, queue = popularSongs) {
-    const allSongs = getSongs();
-    const song = allSongs.find((item) => item.id === songId);
-    if (!song) return;
-
+  function handlePlaySong(song: Song, queue = popularSongs) {
     playSong(song, queue);
     showToast(`Now playing: ${song.title}`, "success");
   }
@@ -147,7 +163,7 @@ export default function HomePage() {
                   song={song}
                   userId={userId}
                   subscription={user.subscription}
-                  onPlay={() => handlePlaySong(song.id)}
+                  onPlay={() => handlePlaySong(song)}
                 />
               ))}
             </div>
@@ -163,7 +179,7 @@ export default function HomePage() {
                   song={song}
                   userId={userId}
                   subscription={user.subscription}
-                  onPlay={() => handlePlaySong(song.id, earlyAccessSongs)}
+                  onPlay={() => handlePlaySong(song, earlyAccessSongs)}
                 />
               ))}
             </div>

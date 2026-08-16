@@ -12,10 +12,11 @@ import { useToast } from "@/components/ui/Toast";
 import { formatDashboardDate } from "@/lib/dashboard";
 import {
   formatTicketId,
+  fetchTicketSummary,
   getTicketStatusLabel,
-  getTicketSummary,
-  replyToTicket,
-  updateTicketStatus,
+  replyToTicketRequest,
+  updateTicketStatusRequest,
+  type TicketSummary,
 } from "@/lib/tickets";
 import { useAuth } from "@/store/AuthContext";
 import { cn } from "@/lib/utils";
@@ -43,22 +44,36 @@ export default function TicketChatPage({ params }: TicketChatPageProps) {
 
 function TicketChatContent({ ticketId }: { ticketId: string }) {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, useApiAuth } = useAuth();
   const { showToast } = useToast();
-  const [version, setVersion] = useState(0);
+  const [summary, setSummary] = useState<TicketSummary | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [error, setError] = useState<string>();
-
-  void version;
-  const summary = getTicketSummary(ticketId);
+  const [isSending, setIsSending] = useState(false);
 
   useEffect(() => {
-    if (!summary) {
-      router.replace("/dashboard/tickets");
-    }
-  }, [summary, router]);
+    let cancelled = false;
 
-  if (!summary || !user) {
+    async function load() {
+      setIsLoading(true);
+      const data = await fetchTicketSummary(ticketId, useApiAuth);
+      if (cancelled) return;
+      if (!data) {
+        router.replace("/dashboard/tickets");
+        return;
+      }
+      setSummary(data);
+      setIsLoading(false);
+    }
+
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [ticketId, useApiAuth, router]);
+
+  if (isLoading || !summary || !user) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
         <p className="text-text-secondary">Loading ticket...</p>
@@ -68,38 +83,41 @@ function TicketChatContent({ ticketId }: { ticketId: string }) {
 
   const { ticket, user: requester } = summary;
 
-  function refreshTicket() {
-    setVersion((value) => value + 1);
-  }
-
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!user) return;
 
-    const result = replyToTicket(ticket.id, user.id, user.role, message);
+    setIsSending(true);
+    const result = await replyToTicketRequest(
+      ticket.id,
+      user.id,
+      user.role,
+      message,
+      useApiAuth,
+    );
+    setIsSending(false);
+
     if (!result.success) {
       setError(result.error ?? "Could not send message.");
       return;
     }
 
+    if (result.summary) setSummary(result.summary);
     setMessage("");
     setError(undefined);
-    refreshTicket();
     showToast("Reply sent.", "success");
   }
 
-  function handleStatusChange(nextStatus: TicketStatus) {
-    const updated = updateTicketStatus(ticket.id, nextStatus);
-    if (!updated) {
-      showToast("Could not update ticket status.", "error");
+  async function handleStatusChange(nextStatus: TicketStatus) {
+    const result = await updateTicketStatusRequest(ticket.id, nextStatus, useApiAuth);
+    if (!result.success) {
+      showToast(result.error ?? "Could not update ticket status.", "error");
       return;
     }
 
-    refreshTicket();
+    if (result.summary) setSummary(result.summary);
     showToast("Ticket status updated.", "success");
   }
-
-  const currentTicket = getTicketSummary(ticketId)!.ticket;
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-5">
@@ -112,34 +130,34 @@ function TicketChatContent({ ticketId }: { ticketId: string }) {
             ← Back to tickets
           </Link>
           <h1 className="mt-2 text-2xl font-bold text-text-primary sm:text-3xl">
-            {currentTicket.subject}
+            {ticket.subject}
           </h1>
           <p className="mt-1 text-sm text-text-secondary">
-            Ticket {formatTicketId(currentTicket.id)} · {requester.displayName}
+            Ticket {formatTicketId(ticket.id)} · {requester.displayName}
           </p>
         </div>
 
-        <Badge variant={currentTicket.status === "closed" ? "default" : "info"}>
-          {getTicketStatusLabel(currentTicket.status)}
+        <Badge variant={ticket.status === "closed" ? "default" : "info"}>
+          {getTicketStatusLabel(ticket.status)}
         </Badge>
       </div>
 
       <Card className="flex min-h-[420px] flex-col p-4 sm:p-5">
         <div className="mb-4 flex flex-col gap-3 border-b border-border-default pb-4 sm:flex-row sm:items-end sm:justify-between">
           <div className="text-sm text-text-muted">
-            Opened {formatDashboardDate(currentTicket.createdAt)}
+            Opened {formatDashboardDate(ticket.createdAt)}
           </div>
           <Select
             label="Ticket status"
-            value={currentTicket.status}
-            onChange={(event) => handleStatusChange(event.target.value as TicketStatus)}
+            value={ticket.status}
+            onChange={(event) => void handleStatusChange(event.target.value as TicketStatus)}
             options={STATUS_OPTIONS}
             className="sm:max-w-xs"
           />
         </div>
 
         <div className="flex flex-1 flex-col gap-3 overflow-y-auto pr-1">
-          {currentTicket.messages.map((entry) => {
+          {ticket.messages.map((entry) => {
             const isStaff = isStaffRole(entry.senderRole);
             const isMine = entry.senderId === user.id;
 
@@ -167,7 +185,10 @@ function TicketChatContent({ ticketId }: { ticketId: string }) {
           })}
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-4 border-t border-border-default pt-4">
+        <form
+          onSubmit={(event) => void handleSubmit(event)}
+          className="mt-4 border-t border-border-default pt-4"
+        >
           <Textarea
             label="Your reply"
             value={message}
@@ -178,8 +199,8 @@ function TicketChatContent({ ticketId }: { ticketId: string }) {
             placeholder="Write a response to the user..."
             error={error}
           />
-          <Button type="submit" className="mt-3">
-            Send reply
+          <Button type="submit" className="mt-3" disabled={isSending}>
+            {isSending ? "Sending..." : "Send reply"}
           </Button>
         </form>
       </Card>

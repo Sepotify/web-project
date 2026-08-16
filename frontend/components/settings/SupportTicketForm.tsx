@@ -4,7 +4,8 @@ import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
-import { createSupportTicket } from "@/lib/admin";
+import { createSupportTicketRequest } from "@/lib/tickets";
+import { useAuth } from "@/store/AuthContext";
 
 interface SupportTicketFormProps {
   userId: string;
@@ -12,17 +13,23 @@ interface SupportTicketFormProps {
 }
 
 export function SupportTicketForm({ userId, onSubmitted }: SupportTicketFormProps) {
+  const { useApiAuth } = useAuth();
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
     setIsSubmitting(true);
 
-    const result = createSupportTicket(userId, subject, message);
+    const result = await createSupportTicketRequest(
+      userId,
+      subject,
+      message,
+      useApiAuth,
+    );
     setIsSubmitting(false);
 
     if (!result.success) {
@@ -36,7 +43,7 @@ export function SupportTicketForm({ userId, onSubmitted }: SupportTicketFormProp
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <form onSubmit={(event) => void handleSubmit(event)} className="flex flex-col gap-4">
       <Input
         id="support-subject"
         label="Subject"

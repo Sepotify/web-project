@@ -108,7 +108,7 @@ def notify_ticket_reply(ticket, message) -> None:
     if sender.role in (UserRole.SUPPORT, UserRole.ADMIN):
         recipients = [ticket.user]
         title = "Support replied to your ticket"
-        link = "/settings"
+        link = f"/my-tickets/{ticket.pk}"
     else:
         recipients = list(
             User.objects.filter(role__in=[UserRole.SUPPORT, UserRole.ADMIN], is_active=True)

@@ -9,8 +9,8 @@ import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SongCard } from "@/components/music/SongCard";
 import {
-  deleteArtistAlbum,
-  deleteArtistSong,
+  deleteArtistAlbumRequest,
+  deleteArtistSongRequest,
   formatFeaturedArtistNames,
   getAlbumStats,
   getSongStats,
@@ -18,6 +18,7 @@ import {
 import { getDefaultCover } from "@/lib/music";
 import { getAlbumSongs } from "@/lib/library";
 import { getSongs } from "@/lib/storage";
+import { useAuth } from "@/store/AuthContext";
 import type { Album, Song, SubscriptionTier } from "@/types";
 
 interface ArtistCatalogProps {
@@ -39,6 +40,7 @@ export function ArtistCatalog({
   onChanged,
   onPlaySong,
 }: ArtistCatalogProps) {
+  const { useApiAuth } = useAuth();
   const [editTarget, setEditTarget] = useState<
     { type: "single"; song: Song } | { type: "album"; album: Album } | null
   >(null);
@@ -49,15 +51,15 @@ export function ArtistCatalog({
 
   const allSongs = getSongs();
 
-  function handleDeleteConfirm() {
+  async function handleDeleteConfirm() {
     if (!deleteTarget) return;
 
     setIsDeleting(true);
 
     const removed =
       deleteTarget.type === "album"
-        ? deleteArtistAlbum(artistId, deleteTarget.album.id)
-        : deleteArtistSong(artistId, deleteTarget.song.id);
+        ? await deleteArtistAlbumRequest(artistId, deleteTarget.album.id, useApiAuth)
+        : await deleteArtistSongRequest(artistId, deleteTarget.song.id, useApiAuth);
 
     setIsDeleting(false);
 
@@ -231,7 +233,7 @@ export function ArtistCatalog({
         }
         workType={deleteTarget?.type === "album" ? "album" : "single"}
         onClose={() => setDeleteTarget(null)}
-        onConfirm={handleDeleteConfirm}
+        onConfirm={() => void handleDeleteConfirm()}
         isDeleting={isDeleting}
       />
     </>

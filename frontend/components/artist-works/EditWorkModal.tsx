@@ -9,8 +9,8 @@ import { FileUploadField } from "@/components/artist-works/FileUploadField";
 import {
   formatFeaturedArtistNames,
   resolveFeaturedArtistIds,
-  updateArtistAlbum,
-  updateArtistSong,
+  updateArtistAlbumRequest,
+  updateArtistSongRequest,
 } from "@/lib/catalog";
 import {
   ALLOWED_AUDIO_EXTENSIONS,
@@ -20,6 +20,7 @@ import {
   validateAudioFile,
   validateCoverFile,
 } from "@/lib/artist-works";
+import { useAuth } from "@/store/AuthContext";
 import type { Album, Song } from "@/types";
 
 type EditTarget =
@@ -41,6 +42,7 @@ export function EditWorkModal({
   onClose,
   onSaved,
 }: EditWorkModalProps) {
+  const { useApiAuth } = useAuth();
   const [title, setTitle] = useState("");
   const [genre, setGenre] = useState("");
   const [releaseYear, setReleaseYear] = useState("");
@@ -123,43 +125,58 @@ export function EditWorkModal({
       let audioUrl: string | undefined;
       let durationSeconds: number | undefined;
 
-      if (coverFile) {
+      if (coverFile && !useApiAuth) {
         coverUrl = await readFileAsDataUrl(coverFile);
       }
 
-      if (audioFile && target.type === "single") {
+      if (audioFile && target.type === "single" && !useApiAuth) {
         audioUrl = await readFileAsDataUrl(audioFile);
+        durationSeconds = await getAudioDurationSeconds(audioFile);
+      } else if (audioFile && target.type === "single") {
         durationSeconds = await getAudioDurationSeconds(audioFile);
       }
 
       if (target.type === "single") {
         const featuredArtistIds = resolveFeaturedArtistIds(featuredArtists, artistId);
-        const saved = updateArtistSong(artistId, target.song.id, {
-          title,
-          genre,
-          releaseYear: parsedYear,
-          lyrics,
-          featuredArtistIds,
-          coverUrl,
-          audioUrl,
-          durationSeconds,
-        });
+        const result = await updateArtistSongRequest(
+          artistId,
+          target.song.id,
+          {
+            title,
+            genre,
+            releaseYear: parsedYear,
+            lyrics,
+            featuredArtistIds,
+            coverUrl,
+            audioUrl,
+            durationSeconds,
+            coverFile,
+            audioFile,
+          },
+          useApiAuth,
+        );
 
-        if (!saved) {
-          setErrors({ form: "Could not update this track." });
+        if (!result.success) {
+          setErrors({ form: result.error ?? "Could not update this track." });
           setIsSubmitting(false);
           return;
         }
       } else {
-        const saved = updateArtistAlbum(artistId, target.album.id, {
-          title,
-          genre,
-          releaseYear: parsedYear,
-          coverUrl,
-        });
+        const result = await updateArtistAlbumRequest(
+          artistId,
+          target.album.id,
+          {
+            title,
+            genre,
+            releaseYear: parsedYear,
+            coverUrl,
+            coverFile,
+          },
+          useApiAuth,
+        );
 
-        if (!saved) {
-          setErrors({ form: "Could not update this album." });
+        if (!result.success) {
+          setErrors({ form: result.error ?? "Could not update this album." });
           setIsSubmitting(false);
           return;
         }
@@ -179,7 +196,7 @@ export function EditWorkModal({
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={modalTitle} className="max-w-xl">
-      <form onSubmit={handleSubmit} className="flex max-h-[70vh] flex-col gap-4 overflow-y-auto pr-1">
+      <form onSubmit={(event) => void handleSubmit(event)} className="flex max-h-[70vh] flex-col gap-4 overflow-y-auto pr-1">
         <Input
           label={target?.type === "album" ? "Album title" : "Track title"}
           value={title}
