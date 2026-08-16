@@ -26,6 +26,8 @@ coverage/
 
 # OS / IDE
 .DS_Store
+
+backend/.gitignore
 .idea/
 .vscode/
 *.log

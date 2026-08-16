@@ -2,12 +2,14 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
+from django.views.generic import RedirectView
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularSwaggerView,
 )
 
 urlpatterns = [
+    path("", RedirectView.as_view(url="/api/docs/", permanent=False)),
     path("admin/", admin.site.urls),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(
@@ -18,6 +20,7 @@ urlpatterns = [
     path("api/", include("accounts.urls")),
     path("api/", include("notifications.urls")),
     path("api/", include("subscriptions.urls")),
+    path("api/", include("music.urls")),
     path("api/", include("tickets.urls")),
 ]
 

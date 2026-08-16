@@ -8,7 +8,14 @@ __pycache__/
 venv/
 media/avatars/*
 !media/avatars/.gitkeep
+media/audio/*
+!media/audio/.gitkeep
+media/covers/*
+!media/covers/.gitkeep
 staticfiles/
 .pytest_cache/
 .mypy_cache/
 *.log
+"\331\201\330\247\330\262-\330\257\331\210\331\205-\332\206\332\251\342\200\214\331\204\333\214\330\263\330\252.md"
+"\331\276\330\261\331\210\332\230\331\207.pdf"
+"\332\206\332\251_\331\204\333\214\330\263\330\252_\331\201\330\247\330\262_\330\247\331\210\331\204.md"

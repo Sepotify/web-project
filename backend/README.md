@@ -79,4 +79,10 @@
 ## Tests
 #
 #   python manage.py test accounts
+#   python manage.py test music
+#
+## Person 2
+#
+# Music catalog, playlists, streaming, and downloads:
+#   see music/README.md
 #
