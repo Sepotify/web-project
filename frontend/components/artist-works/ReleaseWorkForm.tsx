@@ -18,6 +18,7 @@ import {
   type ReleaseType,
 } from "@/lib/publish";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/store/AuthContext";
 
 interface ReleaseWorkFormProps {
   artistId: string;
@@ -37,6 +38,7 @@ const EMPTY_TRACK: TrackFormState = {
 };
 
 export function ReleaseWorkForm({ artistId, onPublished }: ReleaseWorkFormProps) {
+  const { useApiAuth } = useAuth();
   const [releaseType, setReleaseType] = useState<ReleaseType>("single");
   const [title, setTitle] = useState("");
   const [genre, setGenre] = useState("");
@@ -125,19 +127,24 @@ export function ReleaseWorkForm({ artistId, onPublished }: ReleaseWorkFormProps)
     if (!coverFile || tracks.some((track) => !track.audioFile)) return;
 
     setIsSubmitting(true);
-    const result = await publishRelease(artistId, {
-      releaseType,
-      title,
-      genre,
-      releaseYear: Number(releaseYear),
-      featuredArtists,
-      coverFile,
-      tracks: trackInputs,
-    });
+    const result = await publishRelease(
+      artistId,
+      {
+        releaseType,
+        title,
+        genre,
+        releaseYear: Number(releaseYear),
+        featuredArtists,
+        coverFile,
+        tracks: trackInputs,
+      },
+      useApiAuth,
+    );
     setIsSubmitting(false);
 
     if (!result.success) {
       if (result.errors) setErrors(result.errors);
+      else if (result.error) setErrors({ tracks: result.error });
       return;
     }
 

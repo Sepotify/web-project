@@ -12,6 +12,7 @@ export interface ApiArtistProfile {
   id: number;
   status: ArtistStatus;
   stage_name: string;
+  rejection_reason?: string;
 }
 
 export interface ApiUser {
@@ -119,6 +120,11 @@ export function mapApiUserToUser(apiUser: ApiUser): User {
     dailyStreamCount: apiUser.daily_stream_count ?? 0,
     createdAt: apiUser.date_joined ?? new Date().toISOString(),
     artistStatus: apiUser.artist_profile?.status,
+    artistProfileId: apiUser.artist_profile
+      ? String(apiUser.artist_profile.id)
+      : undefined,
+    artistStageName: apiUser.artist_profile?.stage_name,
+    artistRejectionReason: apiUser.artist_profile?.rejection_reason ?? undefined,
   };
 }
 
@@ -246,4 +252,85 @@ export async function apiUpdateTicketStatus(
     method: "PATCH",
     body: { status },
   });
+}
+
+export interface ApiSong {
+  id: number;
+  artist_id: number;
+  artist_stage_name: string;
+  album_id: number | null;
+  title: string;
+  lyrics: string;
+  genre: string;
+  release_year: number;
+  cover_url: string | null;
+  audio_url: string | null;
+  duration_seconds: number;
+  is_early_access: boolean;
+  featured_artist_ids: number[];
+  listener_count: number;
+  stream_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ApiAlbum {
+  id: number;
+  artist_id: number;
+  artist_stage_name: string;
+  title: string;
+  genre: string;
+  release_year: number;
+  cover_url: string | null;
+  song_ids: number[];
+  songs?: ApiSong[];
+  listener_count: number;
+  stream_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ApiMyWorks {
+  artist_id: number;
+  albums: ApiAlbum[];
+  songs: ApiSong[];
+}
+
+export interface ApiReleaseResponse {
+  song?: ApiSong;
+  album?: ApiAlbum;
+  songs?: ApiSong[];
+}
+
+export async function apiFetchMyWorks(): Promise<ApiMyWorks> {
+  return apiRequest<ApiMyWorks>("/artists/me/works/");
+}
+
+export async function apiPublishRelease(formData: FormData): Promise<ApiReleaseResponse> {
+  return apiRequest<ApiReleaseResponse>("/releases/", {
+    method: "POST",
+    body: formData,
+  });
+}
+
+export async function apiUpdateSong(id: string, formData: FormData): Promise<ApiSong> {
+  return apiRequest<ApiSong>(`/songs/${id}/`, {
+    method: "PATCH",
+    body: formData,
+  });
+}
+
+export async function apiDeleteSong(id: string): Promise<void> {
+  await apiRequest<void>(`/songs/${id}/`, { method: "DELETE" });
+}
+
+export async function apiUpdateAlbum(id: string, formData: FormData): Promise<ApiAlbum> {
+  return apiRequest<ApiAlbum>(`/albums/${id}/`, {
+    method: "PATCH",
+    body: formData,
+  });
+}
+
+export async function apiDeleteAlbum(id: string): Promise<void> {
+  await apiRequest<void>(`/albums/${id}/`, { method: "DELETE" });
 }

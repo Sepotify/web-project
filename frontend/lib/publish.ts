@@ -1,3 +1,5 @@
+import { ApiError } from "@/lib/api/client";
+import { apiPublishRelease } from "@/lib/api/endpoints";
 import { addSong } from "@/lib/storage";
 import { releaseAlbum, releaseSong } from "@/lib/releases";
 import {
@@ -6,7 +8,11 @@ import {
   validateAudioFile,
   validateCoverFile,
 } from "@/lib/artist-works";
-import { resolveFeaturedArtistIds } from "@/lib/catalog";
+import {
+  mapApiAlbum,
+  mapApiSong,
+  resolveFeaturedArtistIds,
+} from "@/lib/catalog";
 import { validateRequired } from "@/lib/validation";
 import type { Album, Song } from "@/types";
 
@@ -134,13 +140,77 @@ async function buildSongFromTrack(
   };
 }
 
+async function publishReleaseViaApi(
+  artistId: string,
+  input: PublishReleaseInput,
+): Promise<PublishReleaseResult> {
+  const featuredArtistIds = resolveFeaturedArtistIds(input.featuredArtists, artistId);
+  const formData = new FormData();
+  formData.append("release_type", input.releaseType);
+  formData.append("title", input.title.trim());
+  formData.append("genre", input.genre.trim());
+  formData.append("release_year", String(input.releaseYear));
+  formData.append("featured_artist_ids", featuredArtistIds.join(","));
+  formData.append("cover", input.coverFile);
+
+  for (let index = 0; index < input.tracks.length; index += 1) {
+    const track = input.tracks[index];
+    const durationSeconds = await getAudioDurationSeconds(track.audioFile);
+    formData.append(
+      `track_${index}_title`,
+      input.releaseType === "single" ? input.title.trim() : track.title.trim(),
+    );
+    formData.append(`track_${index}_lyrics`, track.lyrics.trim());
+    formData.append(`track_${index}_audio`, track.audioFile);
+    formData.append(`track_${index}_duration_seconds`, String(durationSeconds));
+  }
+
+  const data = await apiPublishRelease(formData);
+
+  if (data.album) {
+    const album = mapApiAlbum(data.album);
+    const songs = (data.songs ?? []).map(mapApiSong);
+    for (const song of songs) {
+      addSong(song);
+    }
+    // Persist album without re-firing local follower notifications (BE already did).
+    const { addAlbum } = await import("@/lib/storage");
+    if (!songs.length) {
+      addAlbum(album);
+    } else {
+      addAlbum({ ...album, songIds: songs.map((song) => song.id) });
+    }
+    return { success: true, album };
+  }
+
+  if (data.song) {
+    const song = mapApiSong(data.song);
+    addSong(song);
+    return { success: true, song };
+  }
+
+  return { success: false, error: "Unexpected response from the server." };
+}
+
 export async function publishRelease(
   artistId: string,
   input: PublishReleaseInput,
+  useApi = false,
 ): Promise<PublishReleaseResult> {
   const errors = validatePublishReleaseInput(input);
   if (Object.keys(errors).length > 0) {
     return { success: false, errors };
+  }
+
+  if (useApi) {
+    try {
+      return await publishReleaseViaApi(artistId, input);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        return { success: false, error: error.message };
+      }
+      // Fall through to localStorage if backend is unreachable.
+    }
   }
 
   try {

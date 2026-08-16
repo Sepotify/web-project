@@ -23,6 +23,9 @@ export interface User {
   dailyStreamCount: number;
   notificationPreferences?: Partial<Record<NotificationType, boolean>>;
   artistStatus?: ArtistStatus;
+  artistProfileId?: string;
+  artistStageName?: string;
+  artistRejectionReason?: string;
   createdAt: string;
 }
 
