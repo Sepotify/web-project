@@ -104,6 +104,7 @@ export function ProfileView({
                   <>
                     <FollowButton
                       targetUserId={profile.id}
+                      isFollowing={profile.isFollowing}
                       onChange={onFollowChange}
                     />
                     {!currentUser && (

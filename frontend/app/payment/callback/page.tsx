@@ -35,6 +35,8 @@ function PaymentCallbackContent() {
   const [message, setMessage] = useState("Confirming your payment...");
   const [tierLabel, setTierLabel] = useState("");
   const [amount, setAmount] = useState<number | null>(null);
+  const [retryable, setRetryable] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     const authority = searchParams.get("Authority") || searchParams.get("authority");
@@ -47,6 +49,8 @@ function PaymentCallbackContent() {
     }
 
     let cancelled = false;
+    setState("loading");
+    setMessage("Confirming your payment...");
     void (async () => {
       try {
         const result = await apiVerifyPayment({
@@ -66,11 +70,15 @@ function PaymentCallbackContent() {
           await refreshUser();
         } else {
           setState("failed");
+          setRetryable(false);
           setMessage("Payment was not completed. Your plan was not changed.");
         }
       } catch (error) {
         if (cancelled) return;
         setState("failed");
+        // Gateway/network hiccups (HTTP 502) keep the transaction pending on
+        // the backend, so verification can simply be retried.
+        setRetryable(error instanceof ApiError ? error.status === 502 : true);
         setMessage(
           error instanceof ApiError
             ? error.message
@@ -82,7 +90,7 @@ function PaymentCallbackContent() {
     return () => {
       cancelled = true;
     };
-  }, [refreshUser, searchParams]);
+  }, [refreshUser, searchParams, attempt]);
 
   return (
     <AppShell>
@@ -111,7 +119,16 @@ function PaymentCallbackContent() {
                 Back to settings
               </Button>
             </Link>
-            {state === "failed" && (
+            {state === "failed" && retryable && (
+              <Button
+                variant="secondary"
+                className="flex-1"
+                onClick={() => setAttempt((current) => current + 1)}
+              >
+                Retry verification
+              </Button>
+            )}
+            {state === "failed" && !retryable && (
               <Link href="/payment" className="flex-1">
                 <Button variant="secondary" className="w-full">
                   Try again

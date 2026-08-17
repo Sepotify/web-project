@@ -28,6 +28,7 @@ export interface ApiUser {
   daily_stream_count: number;
   follower_count?: number;
   following_count?: number;
+  is_following?: boolean;
   artist_profile?: ApiArtistProfile | null;
   date_joined?: string;
   can_upload_avatar?: boolean;
@@ -120,6 +121,7 @@ export function mapApiUserToUser(apiUser: ApiUser): User {
     dailyStreamCount: apiUser.daily_stream_count ?? 0,
     followerCount: apiUser.follower_count ?? 0,
     followingCount: apiUser.following_count ?? 0,
+    isFollowing: apiUser.is_following ?? false,
     createdAt: apiUser.date_joined ?? new Date().toISOString(),
     artistStatus: apiUser.artist_profile?.status,
     artistProfileId: apiUser.artist_profile
@@ -172,6 +174,46 @@ export async function apiUpdateMe(
     method: "PATCH",
     body,
   });
+}
+
+export interface ApiFollowResult {
+  success: boolean;
+  detail: string;
+  follower_count?: number;
+  following_count?: number;
+}
+
+export async function apiFollowUser(id: string): Promise<ApiFollowResult> {
+  return apiRequest<ApiFollowResult>(`/users/${id}/follow/`, { method: "POST" });
+}
+
+export async function apiUnfollowUser(id: string): Promise<ApiFollowResult> {
+  return apiRequest<ApiFollowResult>(`/users/${id}/follow/`, { method: "DELETE" });
+}
+
+export interface ApiArtistDetail {
+  id: number;
+  user_id: number;
+  stage_name: string;
+  bio: string;
+  status: ArtistStatus;
+  is_verified: boolean;
+  follower_count: number;
+  is_following?: boolean;
+  total_listeners: number;
+  total_streams: number;
+}
+
+export async function apiFetchArtist(id: string): Promise<ApiArtistDetail> {
+  return apiRequest<ApiArtistDetail>(`/artists/${id}/`);
+}
+
+export async function apiFollowArtist(id: string): Promise<ApiFollowResult> {
+  return apiRequest<ApiFollowResult>(`/artists/${id}/follow/`, { method: "POST" });
+}
+
+export async function apiUnfollowArtist(id: string): Promise<ApiFollowResult> {
+  return apiRequest<ApiFollowResult>(`/artists/${id}/follow/`, { method: "DELETE" });
 }
 
 export async function apiFetchNotifications(): Promise<ApiNotificationList> {

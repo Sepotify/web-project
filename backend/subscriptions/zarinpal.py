@@ -8,13 +8,18 @@ merchant_id, amount, description/callback (request) or authority (verify).
 from __future__ import annotations
 
 import json
+import time
 import urllib.error
 import urllib.request
 
 REQUEST_URL = "https://sandbox.zarinpal.com/pg/v4/payment/request.json"
 VERIFY_URL = "https://sandbox.zarinpal.com/pg/v4/payment/verify.json"
 STARTPAY_TEMPLATE = "https://sandbox.zarinpal.com/pg/StartPay/{authority}"
-TIMEOUT_SECONDS = 20
+# The sandbox is slow and occasionally flaky, so allow generous timeouts
+# and one automatic retry on connection-level failures.
+TIMEOUT_SECONDS = 30
+NETWORK_RETRIES = 2
+RETRY_DELAY_SECONDS = 1
 
 
 class ZarinpalError(Exception):
@@ -35,14 +40,19 @@ def _post_json(url: str, payload: dict) -> dict:
         headers={"Content-Type": "application/json"},
         method="POST",
     )
-    try:
-        with urllib.request.urlopen(request, timeout=TIMEOUT_SECONDS) as response:
-            raw = response.read().decode("utf-8")
-    except urllib.error.HTTPError as exc:
-        raw = exc.read().decode("utf-8", errors="replace")
-        raise ZarinpalError(f"Gateway HTTP {exc.code}", {"raw": raw}) from exc
-    except urllib.error.URLError as exc:
-        raise ZarinpalError("Could not reach payment gateway.") from exc
+    raw = None
+    for attempt in range(NETWORK_RETRIES + 1):
+        try:
+            with urllib.request.urlopen(request, timeout=TIMEOUT_SECONDS) as response:
+                raw = response.read().decode("utf-8")
+            break
+        except urllib.error.HTTPError as exc:
+            raw = exc.read().decode("utf-8", errors="replace")
+            raise ZarinpalError(f"Gateway HTTP {exc.code}", {"raw": raw}) from exc
+        except (urllib.error.URLError, TimeoutError, OSError) as exc:
+            if attempt == NETWORK_RETRIES:
+                raise ZarinpalError("Could not reach payment gateway.") from exc
+            time.sleep(RETRY_DELAY_SECONDS)
 
     try:
         parsed = json.loads(raw)

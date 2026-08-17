@@ -158,6 +158,7 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
 
 class ArtistProfileSerializer(serializers.ModelSerializer):
     follower_count = serializers.SerializerMethodField()
+    is_following = serializers.SerializerMethodField()
     user_id = serializers.IntegerField(source="user.id", read_only=True)
     email = serializers.EmailField(source="user.email", read_only=True)
 
@@ -176,6 +177,7 @@ class ArtistProfileSerializer(serializers.ModelSerializer):
             "total_listeners",
             "total_streams",
             "follower_count",
+            "is_following",
             "created_at",
             "updated_at",
         ]
@@ -183,6 +185,12 @@ class ArtistProfileSerializer(serializers.ModelSerializer):
 
     def get_follower_count(self, obj):
         return obj.followers.count()
+
+    def get_is_following(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return False
+        return obj.followers.filter(follower=request.user).exists()
 
 
 class UserPublicSerializer(serializers.ModelSerializer):

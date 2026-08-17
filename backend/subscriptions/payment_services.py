@@ -122,9 +122,9 @@ def verify_checkout(*, authority: str, gateway_status: str | None = None) -> dic
                 authority=payment.authority,
             )
         except ZarinpalError as exc:
-            payment.status = PaymentStatus.FAILED
-            payment.verified_at = timezone.now()
-            payment.save(update_fields=["status", "verified_at"])
+            # Keep the transaction PENDING: the gateway may have accepted the
+            # payment even though this verify call failed (e.g. a transient
+            # network error). The client can safely retry verification.
             raise PaymentError(str(exc), status_code=502) from exc
 
         payment.status = PaymentStatus.SUCCESS
