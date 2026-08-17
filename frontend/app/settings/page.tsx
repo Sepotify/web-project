@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
 import { DeleteAccountModal } from "@/components/settings/DeleteAccountModal";
@@ -158,9 +159,9 @@ export default function SettingsPage() {
             />
             <p className="mt-3 text-sm text-text-muted">
               Track replies in{" "}
-              <a href="/my-tickets" className="text-accent-primary hover:underline">
+              <Link href="/my-tickets" className="text-accent-primary hover:underline">
                 My tickets
-              </a>
+              </Link>
               .
             </p>
           </SettingsSection>
